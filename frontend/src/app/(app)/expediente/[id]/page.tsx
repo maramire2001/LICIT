@@ -6,6 +6,82 @@ import type { Expediente } from "@/types"
 import { ExpedienteEditor } from "@/components/expediente/ExpedienteEditor"
 import Link from "next/link"
 
+type DocRequerido = {
+  tipo: string
+  descripcion: string
+  cubierto: boolean
+  vault_doc_id: string | null
+}
+
+function VaultGap({ analisisId }: { analisisId: string }) {
+  const [docs, setDocs] = useState<DocRequerido[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.vault
+      .requerimiento(analisisId)
+      .then(setDocs)
+      .catch(() => setDocs([]))
+      .finally(() => setLoading(false))
+  }, [analisisId])
+
+  if (loading) return null
+
+  const faltantes = docs.filter((d) => !d.cubierto)
+  const cubiertos = docs.filter((d) => d.cubierto)
+
+  if (docs.length === 0) return null
+
+  return (
+    <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 mb-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-white text-sm font-semibold">Documentos requeridos para esta licitación</h2>
+        {faltantes.length > 0 && (
+          <Link
+            href="/vault"
+            className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+          >
+            Subir al Vault →
+          </Link>
+        )}
+      </div>
+
+      {faltantes.length > 0 && (
+        <div className="mb-4">
+          <p className="text-red-400 text-xs font-medium mb-2">
+            Faltan {faltantes.length} documento{faltantes.length !== 1 ? "s" : ""}
+          </p>
+          <ul className="space-y-2">
+            {faltantes.map((doc) => (
+              <li key={doc.tipo} className="flex items-start gap-2 text-xs">
+                <span className="text-red-400 shrink-0 mt-0.5">✗</span>
+                <span className="text-gray-300">{doc.descripcion}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {cubiertos.length > 0 && (
+        <div>
+          {faltantes.length > 0 && <div className="border-t border-gray-800 my-3" />}
+          <p className="text-green-400 text-xs font-medium mb-2">
+            {cubiertos.length} documento{cubiertos.length !== 1 ? "s" : ""} en el Vault
+          </p>
+          <ul className="space-y-2">
+            {cubiertos.map((doc) => (
+              <li key={doc.tipo} className="flex items-start gap-2 text-xs">
+                <span className="text-green-400 shrink-0 mt-0.5">✓</span>
+                <span className="text-gray-500">{doc.descripcion}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function ExpedientePage({
   params,
 }: {
@@ -69,6 +145,7 @@ export default function ExpedientePage({
           </Link>
         </div>
 
+        <VaultGap analisisId={params.id} />
         <ExpedienteEditor expediente={expediente} />
       </div>
     </div>
