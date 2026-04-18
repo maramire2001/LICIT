@@ -24,7 +24,8 @@ const NIVEL_COLOR: Record<string, string> = {
   oro:    "text-yellow-400 border-yellow-700 bg-yellow-950",
 }
 
-function formatMXN(n: number) {
+function formatMXN(n: number | null) {
+  if (n === null || n === undefined) return "—"
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n)
 }
 
