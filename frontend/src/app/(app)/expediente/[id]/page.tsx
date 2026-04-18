@@ -1,6 +1,7 @@
 "use client"
 export const dynamic = "force-dynamic"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import type { Expediente } from "@/types"
 import { ExpedienteEditor } from "@/components/expediente/ExpedienteEditor"
@@ -87,22 +88,32 @@ export default function ExpedientePage({
 }: {
   params: { id: string }
 }) {
+  const router = useRouter()
   const [expediente, setExpediente] = useState<Expediente | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
-    api.expediente
-      .get(params.id)
+    api.pagos
+      .info(params.id)
+      .then((pagoInfo) => {
+        if (pagoInfo.pago_status !== "confirmado") {
+          router.replace(`/pago/${params.id}`)
+          return undefined
+        }
+        return api.expediente.get(params.id)
+      })
       .then((data) => {
-        setExpediente(data)
-        setLoading(false)
+        if (data) {
+          setExpediente(data)
+          setLoading(false)
+        }
       })
       .catch(() => {
         setError("Expediente no encontrado o análisis aún en proceso")
         setLoading(false)
       })
-  }, [params.id])
+  }, [params.id, router])
 
   if (loading) {
     return (
