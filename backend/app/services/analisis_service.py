@@ -9,6 +9,30 @@ from sqlalchemy import select, func
 import redis.asyncio as aioredis
 from app.core.config import settings
 
+ROI_FIJO = {
+    "horas_equipo": 72,
+    "costo_por_hora_mxn": 350,
+    "costo_total_mxn": 25_200,
+    "tiempo_licit_ia": "180 segundos",
+}
+
+DEPENDENCIAS_ORO = ["IMSS", "ISSSTE", "PEMEX", "CFE", "SEDENA", "SEMAR", "CAPUFE", "FONATUR"]
+KEYWORDS_PLATA = ["ESTADO", "GOBIERNO DEL ESTADO", "MUNICIPIO", "SECRETARIA"]
+
+
+def _clasificar_complejidad(dependencia: str, monto: float | None) -> str:
+    dep = (dependencia or "").upper()
+    if any(k in dep for k in DEPENDENCIAS_ORO):
+        return "oro"
+    if monto and monto >= 20_000_000:
+        return "oro"
+    if monto and monto >= 5_000_000:
+        return "plata"
+    if any(k in dep for k in KEYWORDS_PLATA):
+        return "plata"
+    return "bronce"
+
+
 async def _publish_progress(analisis_id: str, step: str, pct: int):
     r = aioredis.from_url(settings.redis_url)
     try:
@@ -18,6 +42,7 @@ async def _publish_progress(analisis_id: str, step: str, pct: int):
         )
     finally:
         await r.aclose()
+
 
 async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: str):
     async with AsyncSessionLocal() as db:
@@ -40,27 +65,46 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
             f"Datos adicionales: {json.dumps(licitacion.raw_json, ensure_ascii=False)[:4000]}"
         )
 
-        await _publish_progress(analisis_id, "Analizando requisitos con IA", 30)
+        await _publish_progress(analisis_id, "Construyendo anatomía con IA", 30)
 
         analysis_raw = await chat(
             messages=[
                 {
                     "role": "system",
-                    "content": "Eres un experto en licitaciones públicas mexicanas. Responde SIEMPRE en JSON válido.",
+                    "content": (
+                        "Eres un experto en licitaciones públicas mexicanas con 20 años de experiencia. "
+                        "Realizas auditorías forenses de convocatorias gubernamentales. "
+                        "Responde SIEMPRE en JSON válido, sin texto adicional."
+                    ),
                 },
                 {
                     "role": "user",
                     "content": (
-                        'Analiza esta licitación y devuelve un JSON con exactamente estas claves:\n'
-                        '{\n'
+                        "Analiza esta licitación y devuelve un JSON con exactamente estas claves:\n"
+                        "{\n"
                         '  "modelo_evaluacion": "binario" o "puntos",\n'
-                        '  "requisitos_criticos": ["req1", "req2", ...],\n'
-                        '  "riesgos_descalificacion": ["riesgo1", ...],\n'
                         '  "viabilidad": "participar" o "con_condiciones" o "no_participar",\n'
                         '  "score_viabilidad": numero entre 0 y 100,\n'
-                        '  "justificacion": "texto breve"\n'
-                        '}\n\n'
-                        f'Licitación:\n{licitacion_text}'
+                        '  "justificacion": "texto breve de 2-3 oraciones",\n'
+                        '  "matriz_humana": [\n'
+                        '    {"requisito": "descripcion del requisito de personal", "nivel_riesgo": "alto"|"medio"|"bajo"}\n'
+                        "  ],\n"
+                        '  "matriz_materiales": [\n'
+                        '    {"requisito": "descripcion del requisito de equipo o material", "nivel_riesgo": "alto"|"medio"|"bajo"}\n'
+                        "  ],\n"
+                        '  "matriz_financiera": [\n'
+                        '    {"requisito": "descripcion del requisito financiero o documental", "nivel_riesgo": "alto"|"medio"|"bajo"}\n'
+                        "  ],\n"
+                        '  "requisitos_criticos": ["lista de los 5 requisitos mas importantes"],\n'
+                        '  "riesgos_descalificacion": ["lista de hasta 4 causas comunes de descalificacion en este tipo de licitacion"]\n'
+                        "}\n\n"
+                        "Reglas:\n"
+                        "- matriz_humana: perfiles de personal, certificaciones, cantidades de elementos\n"
+                        "- matriz_materiales: equipos, insumos, vehículos, tecnología requerida\n"
+                        "- matriz_financiera: capital contable, liquidez, estados financieros, fianzas, seguros\n"
+                        "- Cada matriz debe tener entre 2 y 5 items\n"
+                        "- nivel_riesgo 'alto' = causa frecuente de descalificación\n\n"
+                        f"Licitación:\n{licitacion_text}"
                     ),
                 },
             ],
@@ -99,6 +143,10 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
         ptw_conservador = float(monto_base) * 0.95 if monto_base else None
         ptw_optimo = float(monto_base) * 0.88 if monto_base else None
         ptw_agresivo = float(monto_base) * 0.80 if monto_base else None
+
+        nivel_complejidad = _clasificar_complejidad(
+            licitacion.dependencia, float(monto_base) if monto_base else None
+        )
 
         await _publish_progress(analisis_id, "Generando expediente v1", 85)
 
@@ -156,6 +204,11 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
         analisis.competidores = {
             "top": [{"empresa": k, **v} for k, v in top_competidores]
         }
+        analisis.nivel_complejidad = nivel_complejidad
+        analisis.matriz_humana = {"items": analysis.get("matriz_humana", [])}
+        analisis.matriz_materiales = {"items": analysis.get("matriz_materiales", [])}
+        analisis.matriz_financiera = {"items": analysis.get("matriz_financiera", [])}
+        analisis.roi_datos = ROI_FIJO
 
         await db.commit()
         await _publish_progress(analisis_id, "Análisis completo", 100)
