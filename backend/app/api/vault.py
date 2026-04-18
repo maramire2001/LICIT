@@ -133,7 +133,10 @@ async def requerimiento_vault(
     requeridos = _extraer_docs_requeridos(requisitos, matrices_items)
 
     vault_result = await db.execute(
-        select(VaultDocumento).where(VaultDocumento.company_id == current_user.company_id)
+        select(VaultDocumento).where(
+            VaultDocumento.company_id == current_user.company_id,
+            VaultDocumento.vigente == True,
+        )
     )
     vault_docs = vault_result.scalars().all()
     vault_tipos = {d.tipo: str(d.id) for d in vault_docs}
