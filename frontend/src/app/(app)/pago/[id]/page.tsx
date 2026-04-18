@@ -68,7 +68,10 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
   }, [])
 
   async function handleSubirComprobante() {
-    if (!comprobante || !token) return
+    if (!comprobante || !token) {
+      setError("Sesión no disponible. Recarga la página.")
+      return
+    }
     setSubiendo(true)
     setError("")
     try {
@@ -102,7 +105,7 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
     )
   }
 
-  if (error || !info) {
+  if (!info) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">

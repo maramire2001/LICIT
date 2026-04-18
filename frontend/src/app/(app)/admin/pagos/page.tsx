@@ -42,10 +42,12 @@ export default function AdminPagosPage() {
 
   async function bloquear(analisis_id: string) {
     setBloqueando(analisis_id)
+    const prev = pagos
+    setPagos((p) => p.filter((x) => x.analisis_id !== analisis_id))
     try {
       await api.pagos.bloquear(analisis_id)
-      setPagos((prev) => prev.filter((p) => p.analisis_id !== analisis_id))
     } catch {
+      setPagos(prev)
       setError("Error al bloquear. Intenta de nuevo.")
     } finally {
       setBloqueando(null)
