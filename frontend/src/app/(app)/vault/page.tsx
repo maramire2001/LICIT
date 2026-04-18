@@ -68,7 +68,12 @@ export default function VaultPage() {
 
         {/* Upload */}
         <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 mb-6 space-y-3">
-          <p className="text-gray-300 text-sm font-medium">Subir documento</p>
+          <div>
+            <p className="text-gray-300 text-sm font-medium">Subir documento</p>
+            <p className="text-gray-600 text-xs mt-1">
+              Tus documentos se almacenan cifrados en tu espacio privado y nunca se comparten con otras empresas.
+            </p>
+          </div>
           <select
             value={selectedTipo}
             onChange={(e) => setSelectedTipo(e.target.value)}

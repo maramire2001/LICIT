@@ -86,6 +86,9 @@ export function PanelDecision({ analisis }: { analisis: Analisis }) {
         <p className="text-gray-600 text-xs mt-2">
           Índice estimado basado en datos históricos y perfil declarado. No constituye garantía de adjudicación.
         </p>
+        <p className="text-gray-600 text-xs mt-1">
+          El análisis usa datos públicos de CompraNet y tu perfil de la bóveda. Tu información nunca se comparte ni se procesa fuera de tu cuenta.
+        </p>
       </div>
 
       {/* Banner ROI */}
