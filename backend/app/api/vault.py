@@ -30,7 +30,8 @@ KEYWORD_MAP = [
 def _extraer_docs_requeridos(requisitos: list, matrices: list) -> list[dict]:
     textos = [str(r).lower() for r in requisitos]
     for m in matrices:
-        textos.append(str(m.get("requisito", "")).lower())
+        if isinstance(m, dict):
+            textos.append(str(m.get("requisito", "")).lower())
 
     encontrados: dict[str, str] = {}
     for keywords, tipo, descripcion in KEYWORD_MAP:
@@ -104,7 +105,7 @@ async def list_documentos(
 
 @router.get("/requerimiento/{analisis_id}")
 async def requerimiento_vault(
-    analisis_id: str,
+    analisis_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -113,16 +114,20 @@ async def requerimiento_vault(
         raise HTTPException(400, "Completa el onboarding primero")
 
     analisis_result = await db.execute(
-        select(Analisis).where(Analisis.id == uuid.UUID(analisis_id))
+        select(Analisis).where(
+            Analisis.id == analisis_id,
+            Analisis.company_id == current_user.company_id,
+        )
     )
     analisis = analisis_result.scalar_one_or_none()
     if not analisis:
         raise HTTPException(404, "Análisis no encontrado")
 
-    requisitos = (analisis.requisitos_criticos or {}).get("items", [])
+    rc = analisis.requisitos_criticos
+    requisitos = rc.get("items", []) if isinstance(rc, dict) else []
     matrices_items = []
     for campo in [analisis.matriz_humana, analisis.matriz_materiales, analisis.matriz_financiera]:
-        if campo:
+        if isinstance(campo, dict):
             matrices_items.extend(campo.get("items", []))
 
     requeridos = _extraer_docs_requeridos(requisitos, matrices_items)
