@@ -16,7 +16,6 @@ const TIPOS = [
   { value: "estado_cuenta", label: "Estado de Cuenta Bancario" },
   { value: "fianza", label: "Póliza de Fianza" },
   { value: "seguro", label: "Póliza de Seguro" },
-  { value: "certificacion", label: "Otra Certificación" },
 ]
 
 export default function VaultPage() {

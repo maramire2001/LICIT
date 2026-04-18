@@ -21,7 +21,7 @@ function VaultGap({ analisisId }: { analisisId: string }) {
     api.vault
       .requerimiento(analisisId)
       .then(setDocs)
-      .catch(() => setDocs([]))
+      .catch((err) => { console.error("VaultGap fetch failed:", err); setDocs([]) })
       .finally(() => setLoading(false))
   }, [analisisId])
 
@@ -145,7 +145,7 @@ export default function ExpedientePage({
           </Link>
         </div>
 
-        <VaultGap analisisId={params.id} />
+        <VaultGap analisisId={expediente.analisis_id} />
         <ExpedienteEditor expediente={expediente} />
       </div>
     </div>
