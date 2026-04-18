@@ -4,6 +4,7 @@ from app.api import auth
 from app.api import licitaciones
 from app.api import analisis, ws
 from app.api import vault, expediente
+from app.api import pagos
 
 app = FastAPI(title="LICIT-IA API", version="0.1.0")
 
@@ -21,6 +22,7 @@ app.include_router(analisis.router, prefix="/api/analisis", tags=["analisis"])
 app.include_router(ws.router, prefix="/ws", tags=["websocket"])
 app.include_router(vault.router, prefix="/api/vault", tags=["vault"])
 app.include_router(expediente.router, prefix="/api/expediente", tags=["expediente"])
+app.include_router(pagos.router, prefix="/api/pagos", tags=["pagos"])
 
 @app.get("/health")
 async def health():
