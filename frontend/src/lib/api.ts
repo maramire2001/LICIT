@@ -61,5 +61,7 @@ export const api = {
   },
   vault: {
     list: () => apiFetch<any[]>("/api/vault/"),
+    requerimiento: (analisis_id: string) =>
+      apiFetch<any[]>(`/api/vault/requerimiento/${analisis_id}`),
   },
 }

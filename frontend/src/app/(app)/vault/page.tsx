@@ -9,7 +9,14 @@ const TIPOS = [
   { value: "rfc", label: "Constancia RFC" },
   { value: "sat32d", label: "Opinión SAT 32-D" },
   { value: "poder", label: "Poder Notarial" },
-  { value: "certificacion", label: "Certificación" },
+  { value: "repse", label: "Registro REPSE" },
+  { value: "iso9001", label: "Certificación ISO 9001" },
+  { value: "iso27001", label: "Certificación ISO 27001" },
+  { value: "infonavit", label: "Opinión INFONAVIT" },
+  { value: "estado_cuenta", label: "Estado de Cuenta Bancario" },
+  { value: "fianza", label: "Póliza de Fianza" },
+  { value: "seguro", label: "Póliza de Seguro" },
+  { value: "certificacion", label: "Otra Certificación" },
 ]
 
 export default function VaultPage() {
