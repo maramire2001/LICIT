@@ -25,7 +25,10 @@ def _calcular_monto(nivel: str, tipo_plan: str) -> int:
 
 def _is_admin(user: User) -> bool:
     admin_email = os.getenv("ADMIN_EMAIL", "")
-    return user.email == admin_email
+    if not admin_email:
+        import logging
+        logging.getLogger(__name__).warning("ADMIN_EMAIL env var not set — admin endpoints are inaccessible")
+    return bool(admin_email) and user.email == admin_email
 
 def get_supabase():
     return create_client(settings.supabase_url, settings.supabase_service_key)
@@ -99,9 +102,12 @@ async def subir_comprobante(
     path = f"comprobantes/{analisis_id}/{analisis_id}.{ext}"
 
     supabase = get_supabase()
-    supabase.storage.from_("vault").upload(
-        path, content, {"content-type": file.content_type or "application/octet-stream", "upsert": "true"}
-    )
+    try:
+        supabase.storage.from_("vault").upload(
+            path, content, {"content-type": file.content_type or "application/octet-stream", "upsert": "true"}
+        )
+    except Exception as exc:
+        raise HTTPException(502, f"Error al subir el archivo: {exc}")
     url = supabase.storage.from_("vault").get_public_url(path)
 
     analisis.comprobante_url = url
@@ -127,10 +133,10 @@ async def notificar_transferencia(
         raise HTTPException(404, "Análisis no encontrado")
     if analisis.pago_status == "bloqueado":
         raise HTTPException(403, "Acceso bloqueado. Contacta al administrador.")
-    if analisis.pago_status == "confirmado":
-        return {"status": "confirmado", "monto": int(analisis.pago_monto) if analisis.pago_monto else None}
     if not analisis.comprobante_url:
         raise HTTPException(400, "Sube el comprobante de transferencia antes de confirmar")
+    if analisis.pago_status == "confirmado":
+        return {"status": "confirmado", "monto": int(analisis.pago_monto) if analisis.pago_monto else None}
 
     company_result = await db.execute(
         select(Company).where(Company.id == current_user.company_id)
