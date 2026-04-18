@@ -12,12 +12,12 @@ class AnalisisResponse(BaseModel):
     viabilidad: str | None
     score_viabilidad: float | None
     modelo_evaluacion_detectado: str | None
-    requisitos_criticos: dict
-    riesgos: dict
-    price_to_win_conservador: float | None
-    ptw_optimo: float | None
-    ptw_agresivo: float | None
-    competidores: dict
+    requisitos_criticos: dict | None = None
+    riesgos: dict | None = None
+    price_to_win_conservador: float | None = None
+    ptw_optimo: float | None = None
+    ptw_agresivo: float | None = None
+    competidores: dict | None = None
     nivel_complejidad: str | None = None
     matriz_humana: dict | None = None
     matriz_materiales: dict | None = None
