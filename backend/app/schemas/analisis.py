@@ -18,6 +18,11 @@ class AnalisisResponse(BaseModel):
     ptw_optimo: float | None
     ptw_agresivo: float | None
     competidores: dict
+    nivel_complejidad: str | None = None
+    matriz_humana: dict | None = None
+    matriz_materiales: dict | None = None
+    matriz_financiera: dict | None = None
+    roi_datos: dict | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
