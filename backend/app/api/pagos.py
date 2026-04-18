@@ -1,12 +1,14 @@
 import os
 import uuid
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.company import User, Company
 from app.models.analisis import Analisis
+from supabase import create_client
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -24,6 +26,9 @@ def _calcular_monto(nivel: str, tipo_plan: str) -> int:
 def _is_admin(user: User) -> bool:
     admin_email = os.getenv("ADMIN_EMAIL", "")
     return user.email == admin_email
+
+def get_supabase():
+    return create_client(settings.supabase_url, settings.supabase_service_key)
 
 
 @router.get("/info/{analisis_id}")
@@ -66,13 +71,17 @@ async def info_pago(
     }
 
 
-@router.post("/notificar/{analisis_id}")
-async def notificar_transferencia(
+@router.post("/comprobante/{analisis_id}")
+async def subir_comprobante(
     analisis_id: uuid.UUID,
+    file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """El cliente confirma que ya realizó la transferencia."""
+    """El cliente sube el comprobante de transferencia bancaria."""
+    if not current_user.company_id:
+        raise HTTPException(400, "Completa el onboarding primero")
+
     result = await db.execute(
         select(Analisis).where(
             Analisis.id == analisis_id,
@@ -82,8 +91,46 @@ async def notificar_transferencia(
     analisis = result.scalar_one_or_none()
     if not analisis:
         raise HTTPException(404, "Análisis no encontrado")
-    if analisis.pago_status in ("confirmado", "en_revision"):
-        return {"status": analisis.pago_status, "monto": float(analisis.pago_monto) if analisis.pago_monto else None}
+    if analisis.pago_status == "bloqueado":
+        raise HTTPException(403, "Acceso bloqueado. Contacta al administrador.")
+
+    content = await file.read()
+    ext = (file.filename or "comprobante.pdf").rsplit(".", 1)[-1]
+    path = f"comprobantes/{analisis_id}/{analisis_id}.{ext}"
+
+    supabase = get_supabase()
+    supabase.storage.from_("vault").upload(
+        path, content, {"content-type": file.content_type or "application/octet-stream", "upsert": "true"}
+    )
+    url = supabase.storage.from_("vault").get_public_url(path)
+
+    analisis.comprobante_url = url
+    await db.commit()
+    return {"comprobante_url": url}
+
+
+@router.post("/notificar/{analisis_id}")
+async def notificar_transferencia(
+    analisis_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """El cliente confirma transferencia. Requiere comprobante previo. Otorga acceso inmediato."""
+    result = await db.execute(
+        select(Analisis).where(
+            Analisis.id == analisis_id,
+            Analisis.company_id == current_user.company_id,
+        )
+    )
+    analisis = result.scalar_one_or_none()
+    if not analisis:
+        raise HTTPException(404, "Análisis no encontrado")
+    if analisis.pago_status == "bloqueado":
+        raise HTTPException(403, "Acceso bloqueado. Contacta al administrador.")
+    if analisis.pago_status == "confirmado":
+        return {"status": "confirmado", "monto": int(analisis.pago_monto) if analisis.pago_monto else None}
+    if not analisis.comprobante_url:
+        raise HTTPException(400, "Sube el comprobante de transferencia antes de confirmar")
 
     company_result = await db.execute(
         select(Company).where(Company.id == current_user.company_id)
@@ -94,10 +141,10 @@ async def notificar_transferencia(
     tipo_plan = company.tipo_plan
     monto = _calcular_monto(analisis.nivel_complejidad, tipo_plan)
 
-    analisis.pago_status = "en_revision"
+    analisis.pago_status = "confirmado"
     analisis.pago_monto = monto
     await db.commit()
-    return {"status": "en_revision", "monto": monto}
+    return {"status": "confirmado", "monto": monto}
 
 
 @router.post("/confirmar/{analisis_id}")
@@ -122,17 +169,39 @@ async def confirmar_pago(
     return {"status": "confirmado"}
 
 
-@router.get("/pendientes")
-async def listar_pendientes(
+@router.post("/bloquear/{analisis_id}")
+async def bloquear_pago(
+    analisis_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Admin: lista de análisis con pago en revisión."""
+    """Admin revoca el acceso cuando el pago no se acredita."""
     if not _is_admin(current_user):
-        raise HTTPException(403, "Solo el administrador puede ver pagos pendientes")
+        raise HTTPException(403, "Solo el administrador puede bloquear pagos")
 
     result = await db.execute(
-        select(Analisis).where(Analisis.pago_status == "en_revision")
+        select(Analisis).where(Analisis.id == analisis_id)
+    )
+    analisis = result.scalar_one_or_none()
+    if not analisis:
+        raise HTTPException(404, "Análisis no encontrado")
+
+    analisis.pago_status = "bloqueado"
+    await db.commit()
+    return {"status": "bloqueado"}
+
+
+@router.get("/recientes")
+async def listar_recientes(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Admin: lista de análisis con pago confirmado (comprobante subido)."""
+    if not _is_admin(current_user):
+        raise HTTPException(403, "Solo el administrador puede ver pagos")
+
+    result = await db.execute(
+        select(Analisis).where(Analisis.pago_status == "confirmado")
     )
     analisis_list = result.scalars().all()
 
@@ -143,6 +212,7 @@ async def listar_pendientes(
             "nivel_complejidad": a.nivel_complejidad,
             "pago_monto": int(a.pago_monto) if a.pago_monto else None,
             "pago_status": a.pago_status,
+            "comprobante_url": a.comprobante_url,
             "created_at": a.created_at.isoformat(),
         }
         for a in analisis_list
