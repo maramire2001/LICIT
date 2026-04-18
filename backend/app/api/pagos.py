@@ -47,7 +47,9 @@ async def info_pago(
         select(Company).where(Company.id == current_user.company_id)
     )
     company = company_result.scalar_one_or_none()
-    tipo_plan = company.tipo_plan if company else "directo"
+    if not company:
+        raise HTTPException(500, "Perfil de empresa no encontrado")
+    tipo_plan = company.tipo_plan
 
     monto = _calcular_monto(analisis.nivel_complejidad, tipo_plan)
 
@@ -80,14 +82,16 @@ async def notificar_transferencia(
     analisis = result.scalar_one_or_none()
     if not analisis:
         raise HTTPException(404, "Análisis no encontrado")
-    if analisis.pago_status == "confirmado":
-        return {"status": "confirmado"}
+    if analisis.pago_status in ("confirmado", "en_revision"):
+        return {"status": analisis.pago_status, "monto": float(analisis.pago_monto) if analisis.pago_monto else None}
 
     company_result = await db.execute(
         select(Company).where(Company.id == current_user.company_id)
     )
     company = company_result.scalar_one_or_none()
-    tipo_plan = company.tipo_plan if company else "directo"
+    if not company:
+        raise HTTPException(500, "Perfil de empresa no encontrado")
+    tipo_plan = company.tipo_plan
     monto = _calcular_monto(analisis.nivel_complejidad, tipo_plan)
 
     analisis.pago_status = "en_revision"
@@ -137,7 +141,7 @@ async def listar_pendientes(
             "analisis_id": str(a.id),
             "company_id": str(a.company_id),
             "nivel_complejidad": a.nivel_complejidad,
-            "pago_monto": float(a.pago_monto) if a.pago_monto else None,
+            "pago_monto": int(a.pago_monto) if a.pago_monto else None,
             "pago_status": a.pago_status,
             "created_at": a.created_at.isoformat(),
         }
