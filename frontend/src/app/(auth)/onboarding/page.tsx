@@ -13,6 +13,7 @@ const STEPS = [
   { id: 3, label: "Rango" },
   { id: 4, label: "Acreditaciones" },
   { id: 5, label: "Prioridades" },
+  { id: 6, label: "Aviso" },
 ]
 
 const ESPECIALIDADES = ["Seguridad", "Limpieza", "Construcción", "TI", "Salud", "Manufactura", "Consultoría", "Otros"]
@@ -30,6 +31,7 @@ type Form = {
   acreditaciones: string[]
   prioridades_instituciones: string[]
   intereses_libres: string
+  aceptaTerminos: boolean
 }
 
 function toggleItem(arr: string[], item: string): string[] {
@@ -80,6 +82,7 @@ export default function OnboardingPage() {
     acreditaciones: [],
     prioridades_instituciones: [],
     intereses_libres: "",
+    aceptaTerminos: false,
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -91,6 +94,7 @@ export default function OnboardingPage() {
     if (step === 3) return form.rango_financiero !== ""
     if (step === 4) return true
     if (step === 5) return form.prioridades_instituciones.length > 0
+    if (step === 6) return form.aceptaTerminos
     return false
   }
 
@@ -123,6 +127,7 @@ export default function OnboardingPage() {
     "¿Cuál es su techo financiero por contrato?",
     "¿Qué acreditaciones tiene vigentes?",
     "¿Qué instituciones son prioritarias?",
+    "Aviso legal",
   ][step]
 
   return (
@@ -240,6 +245,30 @@ export default function OnboardingPage() {
                 }
               />
             </>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-4">
+              <div className="bg-gray-800 border border-gray-700 rounded-md p-4 text-xs text-gray-400 space-y-2 max-h-48 overflow-y-auto">
+                <p className="text-gray-300 font-medium">Aviso de Responsabilidad y Limitación de Garantías</p>
+                <p>LICIT-IA es una herramienta de análisis e inteligencia de datos para licitaciones públicas. No es una consultoría legal ni garantiza resultado alguno en los procesos de contratación.</p>
+                <p>Los índices de competitividad, escenarios de precio y análisis generados son estimaciones probabilísticas basadas en información histórica pública y en los datos declarados por el usuario. No constituyen garantía de adjudicación.</p>
+                <p>La exactitud y completitud de los resultados depende directamente de la información proporcionada por el cliente. LICIT-IA no se hace responsable por errores, omisiones o inexactitudes en los datos ingresados por el usuario, ni por descalificaciones derivadas de información incorrecta o incompleta.</p>
+                <p>La responsabilidad de revisar, validar y presentar correctamente el expediente ante la dependencia convocante es exclusiva del cliente. LICIT-IA proporciona un borrador de apoyo, no un documento oficial.</p>
+                <p>Al continuar, el usuario acepta estos términos y reconoce que LICIT-IA actúa como herramienta de apoyo a la decisión, sin responsabilidad sobre el resultado del proceso licitatorio.</p>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.aceptaTerminos}
+                  onChange={(e) => setForm({ ...form, aceptaTerminos: e.target.checked })}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-600 bg-gray-800 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-300">
+                  He leído y acepto los términos. Entiendo que LICIT-IA es una herramienta de análisis y no garantiza la adjudicación del contrato.
+                </span>
+              </label>
+            </div>
           )}
 
           {error && <p className="text-red-400 text-sm">{error}</p>}

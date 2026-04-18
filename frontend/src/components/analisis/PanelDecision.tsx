@@ -19,6 +19,9 @@ export function PanelDecision({ analisis }: { analisis: Analisis }) {
             {analisis.modelo_evaluacion_detectado ?? "—"}
           </span>
         </p>
+        <p className="text-gray-600 text-xs mt-2">
+          Índice estimado basado en datos históricos y perfil declarado. No constituye garantía de adjudicación.
+        </p>
       </div>
 
       {/* Price to Win */}
