@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic"
 import { use, useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
+import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 
 type PagoInfo = {
@@ -33,8 +34,11 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
   const [info, setInfo] = useState<PagoInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [notificando, setNotificando] = useState(false)
-  const [notificado, setNotificado] = useState(false)
   const [error, setError] = useState("")
+  const [comprobante, setComprobante] = useState<File | null>(null)
+  const [subiendo, setSubiendo] = useState(false)
+  const [comprobanteSubido, setComprobanteSubido] = useState(false)
+  const [token, setToken] = useState<string | null>(null)
 
   const fetchInfo = useCallback(async () => {
     try {
@@ -42,9 +46,6 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
       setInfo(data)
       if (data.pago_status === "confirmado") {
         router.replace(`/expediente/${id}`)
-      }
-      if (data.pago_status === "en_revision") {
-        setNotificado(true)
       }
     } catch {
       setError("No se pudo cargar la información de pago")
@@ -59,14 +60,34 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
     return () => clearInterval(interval)
   }, [fetchInfo])
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setToken(data.session?.access_token ?? null)
+    })
+  }, [])
+
+  async function handleSubirComprobante() {
+    if (!comprobante || !token) return
+    setSubiendo(true)
+    setError("")
+    try {
+      await api.pagos.subirComprobante(id, comprobante, token)
+      setComprobanteSubido(true)
+    } catch {
+      setError("Error al subir el comprobante. Intenta de nuevo.")
+    } finally {
+      setSubiendo(false)
+    }
+  }
+
   async function handleNotificar() {
     setNotificando(true)
+    setError("")
     try {
       await api.pagos.notificar(id)
-      setNotificado(true)
-      setInfo((prev) => prev ? { ...prev, pago_status: "en_revision" } : prev)
+      router.replace(`/expediente/${id}`)
     } catch {
-      setError("Error al registrar tu notificación. Intenta de nuevo.")
+      setError("Error al confirmar. Verifica que tu comprobante esté subido.")
     } finally {
       setNotificando(false)
     }
@@ -148,26 +169,52 @@ export default function PagoPage({ params }: { params: Promise<{ id: string }> }
           </div>
         </div>
 
-        {notificado ? (
-          <div className="bg-blue-950 border border-blue-800 rounded-lg p-5 text-center">
-            <p className="text-blue-300 text-sm font-semibold">Transferencia registrada</p>
-            <p className="text-blue-400 text-xs mt-1">
-              Confirmaremos tu pago en las próximas horas y recibirás acceso automáticamente.
-            </p>
-          </div>
-        ) : (
-          <button
-            onClick={handleNotificar}
-            disabled={notificando}
-            className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
-              notificando
-                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-950 hover:bg-gray-100"
-            }`}
-          >
-            {notificando ? "Registrando..." : "Ya realicé mi transferencia"}
-          </button>
-        )}
+        {/* Step 1: Upload comprobante */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-5 space-y-3">
+          <p className="text-white text-sm font-semibold">
+            Paso 1 — Sube tu comprobante de transferencia
+          </p>
+          <p className="text-gray-500 text-xs">PDF, imagen o XML del comprobante bancario</p>
+          {comprobanteSubido ? (
+            <div className="flex items-center gap-2 text-green-400 text-xs">
+              <span>✓</span>
+              <span>Comprobante cargado correctamente</span>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png,.xml"
+                onChange={(e) => setComprobante(e.target.files?.[0] ?? null)}
+                className="text-gray-400 text-sm file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:bg-gray-700 file:text-gray-300 hover:file:bg-gray-600"
+              />
+              <button
+                onClick={handleSubirComprobante}
+                disabled={!comprobante || subiendo}
+                className={`w-full py-2 rounded-lg text-sm font-semibold transition-colors ${
+                  !comprobante || subiendo
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-700 hover:bg-gray-600 text-white"
+                }`}
+              >
+                {subiendo ? "Subiendo..." : "Subir comprobante"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Step 2: Confirm access */}
+        <button
+          onClick={handleNotificar}
+          disabled={!comprobanteSubido || notificando}
+          className={`w-full py-3 rounded-lg text-sm font-semibold transition-colors ${
+            !comprobanteSubido || notificando
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-white text-gray-950 hover:bg-gray-100"
+          }`}
+        >
+          {notificando ? "Procesando..." : "Confirmar y acceder al expediente →"}
+        </button>
 
         {error && <p className="text-red-400 text-xs text-center">{error}</p>}
 

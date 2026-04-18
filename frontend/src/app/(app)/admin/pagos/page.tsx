@@ -4,12 +4,13 @@ import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 
-type PendientePago = {
+type PagoPendiente = {
   analisis_id: string
   company_id: string
   nivel_complejidad: string
   pago_monto: number | null
   pago_status: string
+  comprobante_url: string | null
   created_at: string
 }
 
@@ -19,15 +20,15 @@ function formatMXN(n: number | null) {
 }
 
 export default function AdminPagosPage() {
-  const [pagos, setPagos] = useState<PendientePago[]>([])
+  const [pagos, setPagos] = useState<PagoPendiente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [confirmando, setConfirmando] = useState<string | null>(null)
+  const [bloqueando, setBloqueando] = useState<string | null>(null)
 
   async function cargar() {
     setLoading(true)
     try {
-      const data = await api.pagos.pendientes()
+      const data = await api.pagos.recientes()
       setPagos(data)
       setError("")
     } catch {
@@ -39,15 +40,15 @@ export default function AdminPagosPage() {
 
   useEffect(() => { cargar() }, [])
 
-  async function confirmar(analisis_id: string) {
-    setConfirmando(analisis_id)
+  async function bloquear(analisis_id: string) {
+    setBloqueando(analisis_id)
     try {
-      await api.pagos.confirmar(analisis_id)
+      await api.pagos.bloquear(analisis_id)
       setPagos((prev) => prev.filter((p) => p.analisis_id !== analisis_id))
     } catch {
-      setError("Error al confirmar. Intenta de nuevo.")
+      setError("Error al bloquear. Intenta de nuevo.")
     } finally {
-      setConfirmando(null)
+      setBloqueando(null)
     }
   }
 
@@ -64,8 +65,8 @@ export default function AdminPagosPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-white">Panel Admin — Pagos en Revisión</h1>
-            <p className="text-gray-500 text-sm mt-0.5">Confirma transferencias para desbloquear expedientes</p>
+            <h1 className="text-xl font-bold text-white">Panel Admin — Pagos Confirmados</h1>
+            <p className="text-gray-500 text-sm mt-0.5">Bloquea si el pago no se acredita en tu banco</p>
           </div>
           <Link href="/dashboard" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">
             ← Dashboard
@@ -76,7 +77,7 @@ export default function AdminPagosPage() {
 
         {pagos.length === 0 ? (
           <div className="bg-gray-900 border border-gray-800 rounded-lg p-8 text-center">
-            <p className="text-gray-500 text-sm">No hay pagos en revisión</p>
+            <p className="text-gray-500 text-sm">No hay pagos confirmados</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -97,17 +98,27 @@ export default function AdminPagosPage() {
                     <p className="text-gray-600 text-xs">
                       {new Date(p.created_at).toLocaleString("es-MX")}
                     </p>
+                    {p.comprobante_url && (
+                      <a
+                        href={p.comprobante_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-400 text-xs hover:underline"
+                      >
+                        Ver comprobante →
+                      </a>
+                    )}
                   </div>
                   <button
-                    onClick={() => confirmar(p.analisis_id)}
-                    disabled={confirmando === p.analisis_id}
+                    onClick={() => bloquear(p.analisis_id)}
+                    disabled={bloqueando === p.analisis_id}
                     className={`shrink-0 px-4 py-2 rounded-md text-xs font-semibold transition-colors ${
-                      confirmando === p.analisis_id
+                      bloqueando === p.analisis_id
                         ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                        : "bg-green-600 hover:bg-green-700 text-white"
+                        : "bg-red-700 hover:bg-red-800 text-white"
                     }`}
                   >
-                    {confirmando === p.analisis_id ? "Confirmando..." : "Confirmar pago"}
+                    {bloqueando === p.analisis_id ? "Bloqueando..." : "Bloquear acceso"}
                   </button>
                 </div>
               </div>
@@ -117,7 +128,8 @@ export default function AdminPagosPage() {
 
         <button
           onClick={cargar}
-          className="mt-4 text-gray-500 text-xs hover:text-gray-300 transition-colors"
+          disabled={loading}
+          className="mt-4 text-gray-500 text-xs hover:text-gray-300 transition-colors disabled:opacity-40"
         >
           Actualizar lista
         </button>

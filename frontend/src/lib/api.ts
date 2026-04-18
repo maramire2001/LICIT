@@ -81,11 +81,22 @@ export const api = {
       apiFetch<{ status: string; monto?: number }>(`/api/pagos/notificar/${analisis_id}`, {
         method: "POST",
       }),
-    confirmar: (analisis_id: string) =>
-      apiFetch<{ status: string }>(`/api/pagos/confirmar/${analisis_id}`, {
+    subirComprobante: (analisis_id: string, file: File, token: string) => {
+      const formData = new FormData()
+      formData.append("file", file)
+      return fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/pagos/comprobante/${analisis_id}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: formData }
+      ).then(async (res) => {
+        if (!res.ok) throw new Error(`Error ${res.status}`)
+        return res.json() as Promise<{ comprobante_url: string }>
+      })
+    },
+    bloquear: (analisis_id: string) =>
+      apiFetch<{ status: string }>(`/api/pagos/bloquear/${analisis_id}`, {
         method: "POST",
       }),
-    pendientes: () =>
+    recientes: () =>
       apiFetch<
         {
           analisis_id: string
@@ -93,8 +104,9 @@ export const api = {
           nivel_complejidad: string
           pago_monto: number | null
           pago_status: string
+          comprobante_url: string | null
           created_at: string
         }[]
-      >("/api/pagos/pendientes"),
+      >("/api/pagos/recientes"),
   },
 }
