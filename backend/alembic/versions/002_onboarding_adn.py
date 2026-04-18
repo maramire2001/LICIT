@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.add_column('companies',
         sa.Column('intereses_libres', sa.Text(), nullable=True))
     op.add_column('companies',
-        sa.Column('tipo_plan', sa.String(20), nullable=True, server_default='radar'))
+        sa.Column('tipo_plan', sa.String(20), nullable=False, server_default=sa.text("'radar'")))
 
 def downgrade() -> None:
     op.drop_column('companies', 'tipo_plan')
