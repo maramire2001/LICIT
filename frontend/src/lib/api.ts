@@ -64,4 +64,37 @@ export const api = {
     requerimiento: (analisis_id: string) =>
       apiFetch<any[]>(`/api/vault/requerimiento/${analisis_id}`),
   },
+  pagos: {
+    info: (analisis_id: string) =>
+      apiFetch<{
+        analisis_id: string
+        nivel_complejidad: string
+        tipo_plan: string
+        monto: number
+        pago_status: string
+        referencia: string
+        banco: string
+        clabe: string
+        titular: string
+      }>(`/api/pagos/info/${analisis_id}`),
+    notificar: (analisis_id: string) =>
+      apiFetch<{ status: string; monto?: number }>(`/api/pagos/notificar/${analisis_id}`, {
+        method: "POST",
+      }),
+    confirmar: (analisis_id: string) =>
+      apiFetch<{ status: string }>(`/api/pagos/confirmar/${analisis_id}`, {
+        method: "POST",
+      }),
+    pendientes: () =>
+      apiFetch<
+        {
+          analisis_id: string
+          company_id: string
+          nivel_complejidad: string
+          pago_monto: number | null
+          pago_status: string
+          created_at: string
+        }[]
+      >("/api/pagos/pendientes"),
+  },
 }

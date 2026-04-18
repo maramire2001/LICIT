@@ -39,6 +39,7 @@ export interface Analisis {
   matriz_materiales: { items: MatrizItem[] } | null
   matriz_financiera: { items: MatrizItem[] } | null
   roi_datos: RoiDatos | null
+  pago_status?: string
   created_at: string
 }
 
