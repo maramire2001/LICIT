@@ -1,6 +1,6 @@
 "use client"
 export const dynamic = "force-dynamic"
-import { useEffect, useState, useCallback } from "react"
+import { use, useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 import Link from "next/link"
@@ -27,7 +27,8 @@ function formatMXN(n: number) {
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n)
 }
 
-export default function PagoPage({ params }: { params: { id: string } }) {
+export default function PagoPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const [info, setInfo] = useState<PagoInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -37,10 +38,10 @@ export default function PagoPage({ params }: { params: { id: string } }) {
 
   const fetchInfo = useCallback(async () => {
     try {
-      const data = await api.pagos.info(params.id)
+      const data = await api.pagos.info(id)
       setInfo(data)
       if (data.pago_status === "confirmado") {
-        router.replace(`/expediente/${params.id}`)
+        router.replace(`/expediente/${id}`)
       }
       if (data.pago_status === "en_revision") {
         setNotificado(true)
@@ -50,7 +51,7 @@ export default function PagoPage({ params }: { params: { id: string } }) {
     } finally {
       setLoading(false)
     }
-  }, [params.id, router])
+  }, [id, router])
 
   useEffect(() => {
     fetchInfo()
@@ -61,7 +62,7 @@ export default function PagoPage({ params }: { params: { id: string } }) {
   async function handleNotificar() {
     setNotificando(true)
     try {
-      await api.pagos.notificar(params.id)
+      await api.pagos.notificar(id)
       setNotificado(true)
       setInfo((prev) => prev ? { ...prev, pago_status: "en_revision" } : prev)
     } catch {
