@@ -27,6 +27,10 @@ async def onboarding(
         sector=payload.sector,
         regiones=payload.regiones,
         cucop_codes=payload.cucop_codes,
+        rango_financiero=payload.rango_financiero,
+        acreditaciones=payload.acreditaciones,
+        prioridades_instituciones=payload.prioridades_instituciones,
+        intereses_libres=payload.intereses_libres,
     )
     db.add(company)
     await db.flush()
