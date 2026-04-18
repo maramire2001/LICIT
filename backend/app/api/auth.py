@@ -53,10 +53,21 @@ async def register_user(
     return {"status": "created"}
 
 @router.get("/me")
-async def me(current_user: User = Depends(get_current_user)):
+async def me(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    company_nombre = None
+    if current_user.company_id:
+        result = await db.execute(
+            select(Company.nombre).where(Company.id == current_user.company_id)
+        )
+        company_nombre = result.scalar_one_or_none()
+
     return {
         "id": str(current_user.id),
         "email": current_user.email,
         "company_id": str(current_user.company_id) if current_user.company_id else None,
+        "company_nombre": company_nombre,
         "rol": current_user.rol,
     }
