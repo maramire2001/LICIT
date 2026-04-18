@@ -22,6 +22,7 @@ const TIPOS = [
 export default function VaultPage() {
   const [docs, setDocs] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState("")
   const [selectedTipo, setSelectedTipo] = useState("rfc")
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -33,19 +34,26 @@ export default function VaultPage() {
     const file = fileRef.current?.files?.[0]
     if (!file) return
     setUploading(true)
+    setUploadError("")
     try {
       const session = (await supabase.auth.getSession()).data.session
       const formData = new FormData()
       formData.append("file", file)
       formData.append("tipo", selectedTipo)
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/vault/upload`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-        body: formData,
-      })
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/vault/upload`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+          body: formData,
+        }
+      )
+      if (!res.ok) throw new Error(`Error ${res.status}`)
       const updated = await api.vault.list()
       setDocs(updated)
       if (fileRef.current) fileRef.current.value = ""
+    } catch (err: any) {
+      setUploadError(err?.message || "Error al subir el documento")
     } finally {
       setUploading(false)
     }
@@ -90,6 +98,9 @@ export default function VaultPage() {
           >
             {uploading ? "Subiendo y extrayendo datos..." : "Subir documento"}
           </button>
+          {uploadError && (
+            <p className="text-red-400 text-xs">{uploadError}</p>
+          )}
         </div>
 
         {/* Document list */}
