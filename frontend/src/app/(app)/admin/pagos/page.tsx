@@ -14,7 +14,7 @@ type PendientePago = {
 }
 
 function formatMXN(n: number | null) {
-  if (!n) return "—"
+  if (n === null || n === undefined) return "—"
   return new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: 0 }).format(n)
 }
 
