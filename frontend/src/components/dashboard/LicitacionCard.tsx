@@ -19,7 +19,13 @@ function formatFecha(fecha: string | null): string {
   })
 }
 
-export function LicitacionCard({ licitacion }: { licitacion: Licitacion }) {
+export function LicitacionCard({
+  licitacion,
+  relevancia,
+}: {
+  licitacion: Licitacion
+  relevancia?: number
+}) {
   return (
     <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 hover:border-gray-700 transition-colors">
       <div className="flex justify-between items-start gap-4">
@@ -46,15 +52,23 @@ export function LicitacionCard({ licitacion }: { licitacion: Licitacion }) {
           </div>
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full border ${
-              licitacion.estado === "activa"
-                ? "border-green-800 text-green-400 bg-green-950"
-                : "border-gray-700 text-gray-500"
-            }`}
-          >
-            {licitacion.estado}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {relevancia !== undefined && relevancia > 0 && (
+              <span
+                title="Coincide con tu perfil ADN"
+                className="w-2 h-2 rounded-full bg-green-400 shrink-0"
+              />
+            )}
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full border ${
+                licitacion.estado === "activa"
+                  ? "border-green-800 text-green-400 bg-green-950"
+                  : "border-gray-700 text-gray-500"
+              }`}
+            >
+              {licitacion.estado}
+            </span>
+          </div>
           <MeInteresaButton licitacionId={licitacion.id} />
         </div>
       </div>

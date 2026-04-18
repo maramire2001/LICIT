@@ -150,8 +150,7 @@ export default function DashboardPage() {
         ) : (
           <div className="space-y-3">
             {licitaciones.map((l) => (
-              // TODO: add relevancia={l.score_relevancia} once Task 5 adds the prop to LicitacionCard
-              <LicitacionCard key={l.id} licitacion={l} />
+              <LicitacionCard key={l.id} licitacion={l} relevancia={l.score_relevancia} />
             ))}
           </div>
         )}
