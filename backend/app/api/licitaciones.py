@@ -21,6 +21,8 @@ RANGO_MONTO: dict[str, tuple[float, float | None]] = {
     "$100M+":     (100_000_000, None),
 }
 
+RADAR_CANDIDATE_LIMIT = 30
+
 
 def _score_licitacion(licitacion: Licitacion, company: Company) -> int:
     score = 0
@@ -43,11 +45,12 @@ def _score_licitacion(licitacion: Licitacion, company: Company) -> int:
             if low <= monto < high:
                 score += 1
 
-    # +1 if sector keyword appears in titulo (case-insensitive)
-    sector = (company.sector or "").lower()
-    titulo = (licitacion.titulo or "").lower()
-    if sector and sector in titulo:
-        score += 1
+    # +1 if any sector keyword (word >3 chars) appears in titulo (case-insensitive)
+    if company.sector and licitacion.titulo:
+        titulo_lower = licitacion.titulo.lower()
+        sector_words = [w for w in company.sector.lower().split() if len(w) > 3]
+        if sector_words and any(w in titulo_lower for w in sector_words):
+            score += 1
 
     return score
 
@@ -95,24 +98,27 @@ async def radar_licitaciones(
         select(Licitacion)
         .where(Licitacion.estado == "activa")
         .order_by(desc(Licitacion.created_at))
-        .limit(30)
+        .limit(RADAR_CANDIDATE_LIMIT)
     )
     licitaciones = lics_result.scalars().all()
 
-    scored = []
-    for lic in licitaciones:
-        s = _score_licitacion(lic, company)
-        data = LicitacionResponse.model_validate(lic).model_dump()
-        data["score_relevancia"] = s
-        data["created_at"] = lic.created_at
-        scored.append(data)
+    # Score and sort ORM objects directly (before serializing)
+    scored_orms = sorted(
+        licitaciones,
+        key=lambda l: (
+            -_score_licitacion(l, company),
+            -(l.created_at.timestamp() if l.created_at else 0)
+        )
+    )
 
-    scored.sort(key=lambda x: (
-        -x["score_relevancia"],
-        -(x["created_at"].timestamp() if x.get("created_at") and hasattr(x.get("created_at"), "timestamp") else 0)
-    ))
+    # Serialize after sorting
+    resultados = []
+    for l in scored_orms:
+        d = LicitacionResponse.model_validate(l).model_dump()
+        d["score_relevancia"] = _score_licitacion(l, company)
+        resultados.append(d)
 
-    return {"sin_perfil": sin_perfil, "resultados": scored}
+    return {"sin_perfil": sin_perfil, "resultados": resultados}
 
 
 @router.get("/", response_model=list[LicitacionResponse])
