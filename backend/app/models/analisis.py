@@ -26,4 +26,5 @@ class Analisis(Base):
     roi_datos: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     pago_status: Mapped[str] = mapped_column(String(20), default="pendiente")
     pago_monto: Mapped[float | None] = mapped_column(Numeric, nullable=True)
+    comprobante_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

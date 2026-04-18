@@ -24,6 +24,7 @@ class AnalisisResponse(BaseModel):
     matriz_financiera: dict | None = None
     roi_datos: dict | None = None
     pago_status: str = "pendiente"
+    comprobante_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
