@@ -9,6 +9,11 @@ export interface Licitacion {
   score_relevancia: number
 }
 
+export interface RadarResponse {
+  sin_perfil: boolean
+  resultados: Licitacion[]
+}
+
 export interface MatrizItem {
   requisito: string
   nivel_riesgo: "alto" | "medio" | "bajo"

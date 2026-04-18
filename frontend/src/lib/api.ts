@@ -1,3 +1,5 @@
+import type { Licitacion, RadarResponse } from "@/types"
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
 async function getToken(): Promise<string | null> {
@@ -26,7 +28,12 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 
 export const api = {
   licitaciones: {
-    list: (page = 1) => apiFetch<any[]>(`/api/licitaciones/?page=${page}`),
+    list: (params?: { page?: number; q?: string }) => {
+      const page = params?.page ?? 1
+      const q = params?.q ? `&q=${encodeURIComponent(params.q)}` : ""
+      return apiFetch<Licitacion[]>(`/api/licitaciones/?page=${page}${q}`)
+    },
+    radar: () => apiFetch<RadarResponse>("/api/licitaciones/radar"),
     get: (id: string) => apiFetch<any>(`/api/licitaciones/${id}`),
     ingestaStatus: () => apiFetch<any>("/api/licitaciones/ingesta-status"),
   },
