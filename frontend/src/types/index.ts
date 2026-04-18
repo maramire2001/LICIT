@@ -9,6 +9,18 @@ export interface Licitacion {
   score_relevancia: number
 }
 
+export interface MatrizItem {
+  requisito: string
+  nivel_riesgo: "alto" | "medio" | "bajo"
+}
+
+export interface RoiDatos {
+  horas_equipo: number
+  costo_por_hora_mxn: number
+  costo_total_mxn: number
+  tiempo_licit_ia: string
+}
+
 export interface Analisis {
   id: string
   licitacion_id: string
@@ -22,6 +34,11 @@ export interface Analisis {
   ptw_optimo: number | null
   ptw_agresivo: number | null
   competidores: { top: Competidor[] }
+  nivel_complejidad: "bronce" | "plata" | "oro" | null
+  matriz_humana: { items: MatrizItem[] } | null
+  matriz_materiales: { items: MatrizItem[] } | null
+  matriz_financiera: { items: MatrizItem[] } | null
+  roi_datos: RoiDatos | null
   created_at: string
 }
 
