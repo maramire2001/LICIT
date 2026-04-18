@@ -60,7 +60,10 @@ def _score_licitacion(licitacion: Licitacion, company: Company) -> int:
 # ---------------------------------------------------------------------------
 
 @router.get("/ingesta-status")
-async def ingesta_status(db: AsyncSession = Depends(get_db)):
+async def ingesta_status(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(IngestaJob)
         .where(IngestaJob.tipo == "backfill")
@@ -102,20 +105,14 @@ async def radar_licitaciones(
     )
     licitaciones = lics_result.scalars().all()
 
-    # Score and sort ORM objects directly (before serializing)
-    scored_orms = sorted(
-        licitaciones,
-        key=lambda l: (
-            -_score_licitacion(l, company),
-            -(l.created_at.timestamp() if l.created_at else 0)
-        )
+    scored_pairs = sorted(
+        [(l, _score_licitacion(l, company)) for l in licitaciones],
+        key=lambda pair: (-pair[1], -(pair[0].created_at.timestamp() if pair[0].created_at else 0))
     )
-
-    # Serialize after sorting
     resultados = []
-    for l in scored_orms:
+    for l, score in scored_pairs:
         d = LicitacionResponse.model_validate(l).model_dump()
-        d["score_relevancia"] = _score_licitacion(l, company)
+        d["score_relevancia"] = score
         resultados.append(d)
 
     return {"sin_perfil": sin_perfil, "resultados": resultados}

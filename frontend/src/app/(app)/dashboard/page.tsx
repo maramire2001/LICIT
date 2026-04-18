@@ -11,6 +11,7 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("")
   const [sinPerfil, setSinPerfil] = useState(false)
   const [companyNombre, setCompanyNombre] = useState("")
+  const [error, setError] = useState("")
   const [ingesta, setIngesta] = useState<{
     progreso: number
     status: string
@@ -20,12 +21,14 @@ export default function DashboardPage() {
 
   async function cargarRadar() {
     setLoading(true)
+    setError("")
     try {
       const data = await api.licitaciones.radar()
       setLicitaciones(data.resultados)
       setSinPerfil(data.sin_perfil)
     } catch {
       setSinPerfil(false)
+      setError("Error al cargar las licitaciones. Intenta de nuevo.")
     } finally {
       setLoading(false)
     }
@@ -33,12 +36,14 @@ export default function DashboardPage() {
 
   async function cargarBusqueda(q: string) {
     setLoading(true)
+    setError("")
     try {
       const data = await api.licitaciones.list({ q })
       setLicitaciones(data)
       setSinPerfil(false)
     } catch {
       setLicitaciones([])
+      setError("Error al cargar las licitaciones. Intenta de nuevo.")
     } finally {
       setLoading(false)
     }
@@ -99,6 +104,11 @@ export default function DashboardPage() {
             className="w-full bg-gray-900 border border-gray-800 rounded-lg px-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-gray-600 transition-colors"
           />
         </div>
+
+        {/* Error */}
+        {error && (
+          <p className="text-red-400 text-sm mb-4 text-center">{error}</p>
+        )}
 
         {/* Content */}
         {loading ? (

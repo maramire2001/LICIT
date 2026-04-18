@@ -6,7 +6,7 @@ export interface Licitacion {
   fecha_apertura: string | null
   monto_estimado: number | null
   estado: string
-  score_relevancia: number
+  score_relevancia?: number
 }
 
 export interface RadarResponse {
