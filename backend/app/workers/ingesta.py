@@ -1,54 +1,72 @@
 import asyncio
 from app.workers.celery_app import celery_app
 from app.services.crawler import fetch_licitaciones_page, parse_ocds_release
-from app.core.database import AsyncSessionLocal
 from app.models.licitacion import Licitacion, Adjudicacion, IngestaJob
 from sqlalchemy import select
-from datetime import datetime
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+
+
+def _make_session():
+    from app.core.config import settings
+    engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+    return async_sessionmaker(engine, expire_on_commit=False), engine
+
 
 @celery_app.task(name="app.workers.ingesta.backfill_ingesta")
 def backfill_ingesta():
     asyncio.run(_backfill())
 
+
 @celery_app.task(name="app.workers.ingesta.incremental_ingesta")
 def incremental_ingesta():
     asyncio.run(_incremental())
 
+
 async def _backfill():
-    async with AsyncSessionLocal() as db:
-        job = IngestaJob(tipo="backfill", status="en_progreso")
-        db.add(job)
-        await db.commit()
-        try:
-            page = 1
-            total = 0
-            while True:
-                data = await fetch_licitaciones_page(page=page, page_size=200)
-                releases = data.get("results", [])
-                if not releases:
-                    break
-                await _upsert_releases(db, releases)
-                total += len(releases)
-                page_count = data.get("pagination", {}).get("pageCount", 1)
-                job.registros_procesados = total
-                job.progreso = min(int((page / max(page_count, 1)) * 100), 99)
+    Session, engine = _make_session()
+    try:
+        async with Session() as db:
+            job = IngestaJob(tipo="backfill", status="en_progreso")
+            db.add(job)
+            await db.commit()
+            try:
+                page = 1
+                total = 0
+                while True:
+                    data = await fetch_licitaciones_page(page=page, page_size=200)
+                    releases = data.get("results", [])
+                    if not releases:
+                        break
+                    await _upsert_releases(db, releases)
+                    total += len(releases)
+                    page_count = data.get("pagination", {}).get("pageCount", 1)
+                    job.registros_procesados = total
+                    job.progreso = min(int((page / max(page_count, 1)) * 100), 99)
+                    await db.commit()
+                    page += 1
+                job.status = "completado"
+                job.progreso = 100
                 await db.commit()
-                page += 1
-            job.status = "completado"
-            job.progreso = 100
-            await db.commit()
-        except Exception as e:
-            job.status = "error"
-            job.error = str(e)
-            await db.commit()
-            raise
+            except Exception as e:
+                job.status = "error"
+                job.error = str(e)
+                await db.commit()
+                raise
+    finally:
+        await engine.dispose()
+
 
 async def _incremental():
-    async with AsyncSessionLocal() as db:
-        data = await fetch_licitaciones_page(page=1, page_size=100)
-        releases = data.get("results", [])
-        await _upsert_releases(db, releases)
-        await db.commit()
+    Session, engine = _make_session()
+    try:
+        async with Session() as db:
+            data = await fetch_licitaciones_page(page=1, page_size=100)
+            releases = data.get("results", [])
+            await _upsert_releases(db, releases)
+            await db.commit()
+    finally:
+        await engine.dispose()
+
 
 async def _upsert_releases(db, releases: list[dict]):
     for release in releases:
