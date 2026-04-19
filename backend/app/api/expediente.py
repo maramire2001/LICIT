@@ -286,5 +286,5 @@ async def descargar_zip(
     return StreamingResponse(
         iter([buf.read()]),
         media_type="application/zip",
-        headers={"Content-Disposition": f"attachment; filename={filename}"},
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
