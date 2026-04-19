@@ -162,7 +162,7 @@ export default function ExpedientePage({
   return (
     <div className="min-h-screen bg-gray-950 p-6">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-xl font-bold text-white">
               Expediente v{expediente.version}
@@ -171,11 +171,6 @@ export default function ExpedientePage({
               Revisión y ajuste del borrador generado por IA
             </p>
           </div>
-          <p className="text-xs text-gray-600 text-center max-w-lg mx-auto mb-3 leading-relaxed">
-            Este expediente es una guía de apoyo generada con IA. Debe ser revisado por el área
-            jurídica antes de presentarse ante la dependencia. La responsabilidad de la presentación
-            recae exclusivamente en el participante.
-          </p>
           <div className="flex flex-col items-end gap-2">
             <div className="flex items-center gap-3">
               <button
@@ -198,6 +193,11 @@ export default function ExpedientePage({
             </div>
           </div>
         </div>
+        <p className="text-xs text-gray-600 text-center max-w-lg mx-auto mb-4 leading-relaxed">
+          Este expediente es una guía de apoyo generada con IA. Debe ser revisado por el área
+          jurídica antes de presentarse ante la dependencia. La responsabilidad de la presentación
+          recae exclusivamente en el participante.
+        </p>
 
         {errorDescarga && (
           <p className="text-red-400 text-sm mb-4 text-center">{errorDescarga}</p>
