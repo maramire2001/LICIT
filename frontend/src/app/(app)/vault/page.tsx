@@ -137,6 +137,12 @@ export default function VaultPage() {
             ))}
           </div>
         )}
+
+        <p className="text-xs text-gray-700 text-center mt-8 max-w-lg mx-auto leading-relaxed">
+          Los documentos se usan únicamente para preparar tu expediente de propuesta. LICIT-IA
+          no es responsable por descalificaciones derivadas de documentos incompletos o vencidos.
+          Verifica la vigencia de cada documento antes de presentar tu propuesta.
+        </p>
       </div>
     </div>
   )

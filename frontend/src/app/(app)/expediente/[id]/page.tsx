@@ -171,7 +171,13 @@ export default function ExpedientePage({
               Revisión y ajuste del borrador generado por IA
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-end gap-2">
+            <p className="text-xs text-gray-600 text-center max-w-lg mx-auto mb-3 leading-relaxed">
+              Este expediente es una guía de apoyo generada con IA. Debe ser revisado por el área
+              jurídica antes de presentarse ante la dependencia. La responsabilidad de la presentación
+              recae exclusivamente en el participante.
+            </p>
+            <div className="flex items-center gap-3">
             <button
               onClick={handleDescargar}
               disabled={descargando}
@@ -189,6 +195,7 @@ export default function ExpedientePage({
             >
               ← Dashboard
             </Link>
+            </div>
           </div>
         </div>
 

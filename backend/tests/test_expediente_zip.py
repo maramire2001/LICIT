@@ -12,6 +12,8 @@ def test_portada_contiene_empresa():
     assert "ABC123456789" in result
     assert "v2" in result
     assert "A1B2C3D4" in result
+    assert "AVISO LEGAL" in result
+    assert "responsabilidad de la presentación" in result
 
 
 def test_checklist_cubierto_sin_riesgo():

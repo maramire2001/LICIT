@@ -17,6 +17,17 @@ import zipfile
 from datetime import datetime
 
 
+DISCLAIMER = (
+    "\n---\n"
+    "AVISO LEGAL\n"
+    "Este expediente es una guía preparada con inteligencia artificial como herramienta de apoyo.\n"
+    "LICIT-IA no garantiza adjudicación ni se responsabiliza por el resultado del proceso licitatorio.\n"
+    "El contenido debe ser revisado y validado por el área jurídica y directiva de su empresa\n"
+    "antes de presentarse ante la dependencia. La responsabilidad de la presentación recae\n"
+    "exclusivamente en el participante.\n"
+)
+
+
 def _fmt_mxn(n) -> str:
     if n is None:
         return "—"
@@ -33,6 +44,7 @@ def _generar_portada(company_nombre: str, company_rfc: str, version: int, analis
         f"Análisis: {analisis_id_short}\n"
         f"Versión:  v{version}\n"
         f"Generado: {fecha}\n"
+        f"{DISCLAIMER}"
     )
 
 
