@@ -38,7 +38,7 @@ def _generar_portada(company_nombre: str, company_rfc: str, version: int, analis
 
 def _flag_doc(doc: dict, riesgos_items: list[str]) -> str | None:
     """Devuelve el texto del riesgo si el doc está flaggeado, None si no."""
-    palabras = [w for w in doc["descripcion"].lower().split() if len(w) > 4]
+    palabras = [w for w in doc["descripcion"].lower().split() if len(w) > 2]
     for riesgo in riesgos_items:
         riesgo_lower = riesgo.lower()
         if doc["tipo"].lower() in riesgo_lower or any(w in riesgo_lower for w in palabras):
@@ -46,7 +46,7 @@ def _flag_doc(doc: dict, riesgos_items: list[str]) -> str | None:
     return None
 
 
-def _generar_checklist(docs_requeridos: list[dict], riesgos_items: list[str]) -> str:
+def _generar_checklist(docs_requeridos: list[dict], riesgos_items: list[str], analisis_id_short: str = "") -> str:
     cubiertos = [d for d in docs_requeridos if d["cubierto"]]
     faltantes = [d for d in docs_requeridos if not d["cubierto"]]
 
@@ -62,6 +62,7 @@ def _generar_checklist(docs_requeridos: list[dict], riesgos_items: list[str]) ->
     lines = [
         "CHECKLIST DE CUMPLIMIENTO",
         "=" * 40,
+        f"Licitación: {analisis_id_short}",
         f"Total requeridos: {n_total}  |  Cubiertos: {n_cubiertos}  |  Requieren revisión: {n_flagged}  |  Faltantes: {n_faltantes}",
         "",
     ]
@@ -91,10 +92,9 @@ def _generar_economica(propuesta_economica: dict, ptw_conservador, ptw_optimo, p
         "=" * 40,
         f"Monto propuesto (óptimo): {_fmt_mxn(monto)}",
         "",
-        "Price to Win:",
-        f"  Conservador: {_fmt_mxn(ptw_conservador)}",
-        f"  Óptimo:      {_fmt_mxn(ptw_optimo)}",
-        f"  Agresivo:    {_fmt_mxn(ptw_agresivo)}",
+        f"Price to Win conservador: {_fmt_mxn(ptw_conservador)}",
+        f"Price to Win óptimo:      {_fmt_mxn(ptw_optimo)}",
+        f"Price to Win agresivo:    {_fmt_mxn(ptw_agresivo)}",
         "",
     ]
     if desglose:
@@ -118,7 +118,7 @@ def _generar_pendientes(docs_requeridos: list[dict], riesgos_items: list[str]) -
                 flagged_lines.append(f"[⚑ REVISAR] {d['descripcion']}\n           → {f}")
 
     if not flagged_lines and not faltantes_lines:
-        return "ACCIONES PENDIENTES\n" + "=" * 40 + "\n\nTodo en orden — expediente al 100% de cobertura documental."
+        return "Todo en orden — expediente al 100% de cobertura documental."
 
     lines = ["ACCIONES PENDIENTES ANTES DE ENVIAR", "=" * 40, ""]
     lines.extend(flagged_lines)
@@ -233,7 +233,7 @@ async def descargar_zip(
     )
     company = company_result.scalar_one_or_none()
     if not company:
-        raise HTTPException(500, "Perfil de empresa no encontrado")
+        raise HTTPException(500, "Error al generar el expediente")
 
     rc = analisis.requisitos_criticos or {}
     requisitos = rc.get("items", []) if isinstance(rc, dict) else []
@@ -256,10 +256,12 @@ async def descargar_zip(
         for r in requeridos
     ]
     riesgos_items: list[str] = (analisis.riesgos or {}).get("items", [])
+    rc_items: list[str] = (analisis.requisitos_criticos or {}).get("items", [])
+    flag_items: list[str] = riesgos_items + rc_items
     analisis_id_short = str(analisis_id)[:8].upper()
 
     portada = _generar_portada(company.nombre, company.rfc, exp.version, analisis_id_short)
-    checklist = _generar_checklist(docs_requeridos, riesgos_items)
+    checklist = _generar_checklist(docs_requeridos, flag_items, analisis_id_short)
     tecnica = exp.propuesta_tecnica_draft or (
         "[Propuesta técnica no generada — regresa al expediente y usa el editor IA]"
     )
@@ -269,7 +271,7 @@ async def descargar_zip(
         analisis.ptw_optimo,
         analisis.ptw_agresivo,
     )
-    pendientes = _generar_pendientes(docs_requeridos, riesgos_items)
+    pendientes = _generar_pendientes(docs_requeridos, flag_items)
 
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:

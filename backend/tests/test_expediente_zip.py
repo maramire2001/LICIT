@@ -49,6 +49,7 @@ def test_checklist_conteo():
     assert "Total requeridos: 3" in result
     assert "Cubiertos: 2" in result
     assert "Faltantes: 1" in result
+    assert "Licitación:" in result
 
 
 def test_economica_con_ptw():
@@ -60,7 +61,7 @@ def test_economica_con_ptw():
     )
     assert "5,000,000" in result
     assert "4,500,000" in result
-    assert "Conservador" in result
+    assert "Price to Win conservador:" in result
 
 
 def test_economica_sin_monto():
