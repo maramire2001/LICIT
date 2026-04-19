@@ -171,30 +171,30 @@ export default function ExpedientePage({
               Revisión y ajuste del borrador generado por IA
             </p>
           </div>
+          <p className="text-xs text-gray-600 text-center max-w-lg mx-auto mb-3 leading-relaxed">
+            Este expediente es una guía de apoyo generada con IA. Debe ser revisado por el área
+            jurídica antes de presentarse ante la dependencia. La responsabilidad de la presentación
+            recae exclusivamente en el participante.
+          </p>
           <div className="flex flex-col items-end gap-2">
-            <p className="text-xs text-gray-600 text-center max-w-lg mx-auto mb-3 leading-relaxed">
-              Este expediente es una guía de apoyo generada con IA. Debe ser revisado por el área
-              jurídica antes de presentarse ante la dependencia. La responsabilidad de la presentación
-              recae exclusivamente en el participante.
-            </p>
             <div className="flex items-center gap-3">
-            <button
-              onClick={handleDescargar}
-              disabled={descargando}
-              className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
-                descargando
-                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-950 hover:bg-gray-100"
-              }`}
-            >
-              {descargando ? "Generando..." : "Descargar ZIP"}
-            </button>
-            <Link
-              href="/dashboard"
-              className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
-            >
-              ← Dashboard
-            </Link>
+              <button
+                onClick={handleDescargar}
+                disabled={descargando}
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-colors ${
+                  descargando
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-950 hover:bg-gray-100"
+                }`}
+              >
+                {descargando ? "Generando..." : "Descargar ZIP"}
+              </button>
+              <Link
+                href="/dashboard"
+                className="text-gray-500 hover:text-gray-300 text-sm transition-colors"
+              >
+                ← Dashboard
+              </Link>
             </div>
           </div>
         </div>
