@@ -57,6 +57,15 @@ export const api = {
         `/api/expediente/${expediente_id}/ai-refine?instruccion=${encodeURIComponent(instruccion)}`,
         { method: "POST" }
       ),
+    descargarZip: async (analisis_id: string) => {
+      const token = await getToken()
+      const res = await fetch(
+        `${API_URL}/api/expediente/${analisis_id}/zip`,
+        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+      )
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      return res.blob()
+    },
   },
   auth: {
     me: () => apiFetch<any>("/api/auth/me"),
