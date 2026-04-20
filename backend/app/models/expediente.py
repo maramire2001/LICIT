@@ -14,5 +14,6 @@ class Expediente(Base):
     propuesta_economica: Mapped[dict] = mapped_column(JSON, default=dict)
     checklist: Mapped[dict] = mapped_column(JSON, default=dict)
     faltantes: Mapped[dict] = mapped_column(JSON, default=dict)
+    anexo_respuestas: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

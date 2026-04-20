@@ -2,6 +2,14 @@ from pydantic import BaseModel
 import uuid
 from datetime import datetime
 
+class AnexoRespuestaItem(BaseModel):
+    numero: str
+    cumple: bool | None = None
+    nota: str = ""
+
+class UpdateAnexoRespuestas(BaseModel):
+    items: list[AnexoRespuestaItem]
+
 class ExpedienteResponse(BaseModel):
     id: uuid.UUID
     analisis_id: uuid.UUID
@@ -10,6 +18,7 @@ class ExpedienteResponse(BaseModel):
     propuesta_economica: dict
     checklist: dict
     faltantes: dict
+    anexo_respuestas: dict | None = None
     version: int
     created_at: datetime
 
