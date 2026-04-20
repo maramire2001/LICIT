@@ -17,6 +17,20 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str = ""
     smtp_pass: str = ""
+    allowed_origins: str = "http://localhost:3000"
+    admin_email: str = ""
+    bank_clabe: str = ""
+    bank_nombre: str = ""
+    bank_titular: str = ""
+
+    @property
+    def async_database_url(self) -> str:
+        url = self.database_url
+        if url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        return url
 
     class Config:
         env_file = ".env"
