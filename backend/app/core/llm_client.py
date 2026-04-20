@@ -4,7 +4,7 @@ from app.core.config import settings
 
 _client = anthropic.AsyncAnthropic(api_key=settings.anthropic_api_key)
 
-DEFAULT_MODEL = "claude-sonnet-4-5"
+DEFAULT_MODEL = "claude-sonnet-4-6"
 FAST_MODEL = "claude-haiku-4-5-20251001"
 
 async def chat(
@@ -23,7 +23,7 @@ async def chat(
 
     kwargs: dict = {
         "model": model,
-        "max_tokens": 4096,
+        "max_tokens": 8192,
         "temperature": temperature,
         "messages": user_messages,
     }
