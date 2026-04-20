@@ -24,6 +24,7 @@ class Analisis(Base):
     matriz_materiales: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     matriz_financiera: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     roi_datos: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    anexo_tecnico_requisitos: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     pago_status: Mapped[str] = mapped_column(String(20), default="pendiente")
     pago_monto: Mapped[float | None] = mapped_column(Numeric, nullable=True)
     comprobante_url: Mapped[str | None] = mapped_column(Text, nullable=True)

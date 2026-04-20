@@ -23,6 +23,7 @@ class AnalisisResponse(BaseModel):
     matriz_materiales: dict | None = None
     matriz_financiera: dict | None = None
     roi_datos: dict | None = None
+    anexo_tecnico_requisitos: dict | None = None
     pago_status: str = "pendiente"
     comprobante_url: str | None = None
     created_at: datetime
