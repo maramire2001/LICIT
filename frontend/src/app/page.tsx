@@ -73,6 +73,17 @@ const DIFERENCIADORES = [
     color: "from-emerald-500/20 to-emerald-600/5 border-emerald-500/30",
     icon_bg: "bg-emerald-500/20 text-emerald-400",
   },
+  {
+    icon: "📋",
+    titulo: "Copiloto de Expediente",
+    tagline: "Requisito por requisito. Sin que se te escape ninguno.",
+    detalle:
+      "Extraemos cada punto numerado del Anexo Técnico tal como aparece en las bases —  3.1, IV.2.a, punto 6.8 — y te presentamos una revisión punto por punto: ¿Cumples? ¿No cumples? ¿Tienes la evidencia? Cuando terminas, descargas tu expediente completo con tu revisión integrada.",
+    stat: "30+",
+    stat_label: "requisitos extraídos automáticamente",
+    color: "from-orange-500/20 to-orange-600/5 border-orange-500/30",
+    icon_bg: "bg-orange-500/20 text-orange-400",
+  },
 ]
 
 const COMPETIDORES = [
@@ -190,7 +201,7 @@ function Hero() {
         </h1>
 
         <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-          En 45 segundos analizamos las 400 páginas de bases, detectamos los candados que descalifican al 68% de los licitantes, modelamos a tu competencia y generamos tu expediente completo.
+          En 3 minutos leemos las bases completas en PDF, extraemos cada requisito numerado del Anexo Técnico, detectamos los candados que descalifican, calculamos tu Price to Win y generamos el expediente listo para revisar punto por punto.
           <span className="text-white font-medium"> Sin abogados. Sin Excel. Sin adivinar.</span>
         </p>
 
@@ -214,10 +225,10 @@ function Hero() {
         {/* Proof bar */}
         <div className="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-center">
           {[
-            { stat: "45 seg", label: "Análisis completo" },
-            { stat: "10,000+", label: "Licitaciones analizadas" },
-            { stat: "85", label: "Anexos generados automáticamente" },
-            { stat: "92%", label: "Score de viabilidad promedio" },
+            { stat: "3 min", label: "Análisis completo de bases" },
+            { stat: "30+", label: "Requisitos del Anexo extraídos" },
+            { stat: "3", label: "Escenarios Price to Win" },
+            { stat: "100%", label: "Análisis personalizado por empresa" },
           ].map((s) => (
             <div key={s.stat} className="flex flex-col">
               <span className="text-2xl font-black text-white">{s.stat}</span>

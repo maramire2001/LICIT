@@ -94,6 +94,49 @@ export const DEMO_DOCS = [
   { id: "fianza", label: "Fianza de sostenimiento — 5% del monto base", estado: "falta" as const, nota: "Emitida por institución autorizada SHCP · Punto 5.3" },
 ]
 
+export const DEMO_ANEXO_REQUISITOS = [
+  {
+    numero: "3.1",
+    texto: "El licitante deberá acreditar REPSE vigente con antigüedad mínima de 12 meses a la fecha de apertura de proposiciones, expedido por la STPS.",
+    riesgo: "alto" as const,
+    evidencia: "Constancia REPSE con fecha de emisión y folio STPS",
+    cumple: true as const,
+    nota: "Constancia vigente — emitida hace 18 meses",
+  },
+  {
+    numero: "3.2",
+    texto: "Certificación ISO 9001:2015 vigente que cubra específicamente los procesos de reclutamiento, selección y capacitación de personal de seguridad privada.",
+    riesgo: "alto" as const,
+    evidencia: "Certificado ISO con alcance en reclutamiento de seguridad",
+    cumple: true as const,
+    nota: "Cubre reclutamiento — verificar alcance exacto del certificado",
+  },
+  {
+    numero: "4.2",
+    texto: "Opinión de cumplimiento de obligaciones fiscales positiva ante el SAT artículo 32-D. Aplica también a subcontratistas directos.",
+    riesgo: "alto" as const,
+    evidencia: "Opinión SAT 32-D vigente — incluir subcontratistas",
+    cumple: false as const,
+    nota: "Falta opinión de subcontratista Servicios Auxiliares SA de CV",
+  },
+  {
+    numero: "5.3",
+    texto: "Fianza de sostenimiento del 5% del monto máximo de la propuesta económica, expedida por institución afianzadora autorizada por la SHCP.",
+    riesgo: "medio" as const,
+    evidencia: "Póliza de fianza de sostenimiento emitida por institución SHCP",
+    cumple: null,
+    nota: "",
+  },
+  {
+    numero: "6.8",
+    texto: "Acreditar capital contable mínimo de $18,700,000 MXN mediante estados financieros dictaminados por contador público certificado, con fecha no mayor a 12 meses.",
+    riesgo: "medio" as const,
+    evidencia: "Estados financieros dictaminados — capital contable ≥ $18.7M",
+    cumple: null,
+    nota: "",
+  },
+]
+
 export const DISCLAIMER_CORTO =
   "Herramienta de apoyo estratégico. La presentación final es responsabilidad del participante."
 
