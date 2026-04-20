@@ -4,7 +4,7 @@ from sqlalchemy import select
 from app.models.licitacion import Licitacion, LicitacionDoc
 from app.services.ocr import extract_text_from_bytes
 
-MAX_OCR_CHARS = 180_000  # ~90k tokens, leaves room for prompt + response in 200k ctx
+MAX_OCR_CHARS = 60_000  # ~15k tokens — enough to read full Anexo Técnico, leaves ample room for response
 
 
 def _find_pdf_url(licitacion: Licitacion) -> str | None:

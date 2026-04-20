@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LICIT-IA · Diseño Completo Landing</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #030712; color: #f9fafb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; }
+
+  .page-header { background: #0f172a; border-bottom: 1px solid #1e3a5f; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .page-header h1 { font-size: 1rem; color: #60a5fa; font-weight: 700; }
+  .page-header p { font-size: 0.75rem; color: #64748b; }
+  .badge { background: #1e3a5f; color: #93c5fd; font-size: 0.65rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .section-block { border: 1px solid #1e293b; border-radius: 12px; margin: 1.5rem 2rem; overflow: hidden; }
+  .section-label { background: #0f172a; border-bottom: 1px solid #1e293b; padding: 0.6rem 1.2rem; display: flex; align-items: center; gap: 0.75rem; }
+  .section-num { background: #1e40af; color: white; font-size: 0.65rem; font-weight: 800; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .section-name { font-size: 0.75rem; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.08em; }
+  .section-status { margin-left: auto; font-size: 0.65rem; }
+  .new { background: #14532d; color: #86efac; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700; }
+  .changed { background: #713f12; color: #fcd34d; padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 700; }
+  .same { background: #1e293b; color: #64748b; padding: 0.15rem 0.5rem; border-radius: 4px; }
+
+  .section-body { padding: 1.2rem 1.5rem; }
+  .section-body h3 { font-size: 1rem; font-weight: 800; color: white; margin-bottom: 0.4rem; }
+  .section-body .tagline { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; font-style: italic; }
+  .items { display: flex; flex-direction: column; gap: 0.4rem; }
+  .item { display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.8rem; color: #94a3b8; }
+  .item .dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; margin-top: 5px; flex-shrink: 0; }
+  .item .dot.green { background: #22c55e; }
+  .item .dot.yellow { background: #eab308; }
+  .highlight { color: #e2e8f0; font-weight: 600; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .mini-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 0.8rem 1rem; }
+  .mini-card h4 { font-size: 0.75rem; font-weight: 700; color: #60a5fa; margin-bottom: 0.3rem; }
+  .mini-card p { font-size: 0.75rem; color: #64748b; line-height: 1.4; }
+  .price-big { font-size: 1.4rem; font-weight: 900; color: white; }
+  .price-sub { font-size: 0.65rem; color: #64748b; margin-top: 0.1rem; }
+
+  .cta-preview { background: #0f172a; border: 1px solid #1e3a5f; border-radius: 10px; padding: 1rem 1.5rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary { background: #1d4ed8; color: white; font-size: 0.8rem; font-weight: 700; padding: 0.6rem 1.2rem; border-radius: 8px; border: none; cursor: default; }
+  .btn-secondary { background: transparent; color: #60a5fa; font-size: 0.75rem; border: none; cursor: default; text-decoration: underline; }
+
+  .app-section { background: #0a0f1e; border: 1px solid #1e3a5f; border-radius: 12px; margin: 1.5rem 2rem; padding: 1.2rem 1.5rem; }
+  .app-section h2 { font-size: 0.9rem; font-weight: 800; color: #f59e0b; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+  .app-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.6rem 0; border-bottom: 1px solid #1e293b; }
+  .app-item:last-child { border-bottom: none; }
+  .app-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+  .app-item h4 { font-size: 0.78rem; font-weight: 700; color: #e2e8f0; margin-bottom: 0.15rem; }
+  .app-item p { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
+  .priority { font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.4rem; border-radius: 4px; margin-left: 0.4rem; }
+  .p-alta { background: #7f1d1d; color: #fca5a5; }
+  .p-media { background: #713f12; color: #fcd34d; }
+  .p-baja { background: #1e3a2f; color: #86efac; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>LICIT-IA · Diseño Completo</h1>
+    <p>Estructura C · Precios C · CTA C — Aprobados</p>
+  </div>
+  <span class="badge">Vista previa del spec</span>
+</div>
+
+<!-- LANDING SECTIONS -->
+<div style="padding: 0.5rem 0 0.5rem; margin: 1.5rem 2rem 0;">
+  <p style="font-size:0.7rem; color:#475569; text-transform:uppercase; letter-spacing:0.1em; font-weight:700;">● Nueva estructura de la landing (7 secciones)</p>
+</div>
+
+<!-- 1. HERO -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">1</div>
+    <span class="section-name">Hero</span>
+    <span class="section-status"><span class="changed">MODIFICADO</span></span>
+  </div>
+  <div class="section-body">
+    <h3>"La competencia te dice que existe la licitación. LICIT-IA te dice si puedes ganarla."</h3>
+    <p class="tagline">Mismo headline — funciona. Se ajustan las estadísticas y los CTAs.</p>
+    <div class="items">
+      <div class="item"><div class="dot yellow"></div><span>Quitar stats inventadas (10,000+ licitaciones, 92% promedio) → reemplazar con datos reales o eliminar</span></div>
+      <div class="item"><div class="dot"></div><span>CTA primario: <span class="highlight">🔒 Agendar demo privada →</span></span></div>
+      <div class="item"><div class="dot"></div><span>CTA secundario: <span class="highlight">Ver demo interactiva sin registro</span></span></div>
+      <div class="item"><div class="dot yellow"></div><span>Tagline de empresa: quitar "by Inteligencia en Licitaciones S.A. de C.V." del navbar (ocupa espacio, suena burocrático)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. PROBLEMA -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">2</div>
+    <span class="section-name">El Problema del Mercado</span>
+    <span class="section-status"><span class="changed">MODIFICADO</span></span>
+  </div>
+  <div class="section-body">
+    <p class="tagline">Misma estructura, competidores actualizados.</p>
+    <div class="items">
+      <div class="item"><div class="dot yellow"></div><span>Cambiar ejemplos: <span class="highlight">Gober.ai · iaLicitaciones · ComprasMX</span> (no "Tenders.mx" que nadie conoce)</span></div>
+      <div class="item"><div class="dot"></div><span>Falla de Gober: "Promete automatizar todo pero no tiene Bóveda de documentos ni valida vigencias. Tu Opinión del SAT vencida te descalifica aunque el expediente sea perfecto."</span></div>
+      <div class="item"><div class="dot"></div><span>Falla de iaLicitaciones: "Es español, entiende pliegos europeos, no Compranet 6.0 ni LAASSP."</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. DIFERENCIADORES -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">3</div>
+    <span class="section-name">4 Diferenciadores</span>
+    <span class="section-status"><span class="changed">MODIFICADO — se agrega Bóveda</span></span>
+  </div>
+  <div class="section-body">
+    <div class="two-col">
+      <div class="mini-card">
+        <h4>🔍 Auditoría de Candados</h4>
+        <p>Igual que hoy. 45 seg vs 4 días.</p>
+      </div>
+      <div class="mini-card">
+        <h4>🧬 ADN Corporativo</h4>
+        <p>Igual que hoy. Cruce contra capacidad real.</p>
+      </div>
+      <div class="mini-card">
+        <h4>🎯 Price to Win</h4>
+        <p>Igual que hoy. 3 escenarios.</p>
+      </div>
+      <div class="mini-card" style="border-color:#22c55e40;">
+        <h4 style="color:#86efac;">🔐 Bóveda de Cumplimiento <span style="font-size:0.6rem; background:#14532d; color:#86efac; padding:0.1rem 0.4rem; border-radius:4px;">NUEVO</span></h4>
+        <p>Tus documentos legales siempre vigentes. La IA audita diariamente: SAT, IMSS, REPSE, poderes. Alerta proactiva antes de que venza algo. La competencia no tiene esto.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. PRECIOS -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">4</div>
+    <span class="section-name">Planes y Precios</span>
+    <span class="section-status"><span class="new">NUEVO</span></span>
+  </div>
+  <div class="section-body">
+    <p class="tagline">Suscripción visible arriba · Menú de créditos expandible abajo</p>
+    <div class="mini-card" style="margin-bottom:1rem;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+        <div>
+          <h4>Acceso a la plataforma</h4>
+          <div class="price-big">$12,500 <span style="font-size:0.8rem; font-weight:400; color:#64748b;">/ mes</span></div>
+          <div class="price-sub">Incluye: Radar Compranet 24/7 · Bóveda de Cumplimiento · Análisis de Competencia · Panel de Decisión</div>
+        </div>
+        <div style="font-size:0.7rem; color:#64748b; max-width:180px; text-align:right;">El expediente se genera aparte. Solo pagas por los concursos que decides atacar.</div>
+      </div>
+    </div>
+    <div class="mini-card">
+      <h4 style="margin-bottom:0.6rem;">▾ ¿Cuánto cuesta generar un expediente?</h4>
+      <div style="display:grid; grid-template-columns:1fr auto; gap:0.4rem 1rem; align-items:center;">
+        <span style="font-size:0.75rem; color:#94a3b8;">Invitación a Cuando Menos Tres Personas</span>
+        <span style="font-size:0.85rem; font-weight:700; color:white; text-align:right;">$18,000</span>
+        <span style="font-size:0.65rem; color:#475569; margin-top:-0.3rem;">Concurso por invitación, pliego corto, respuesta rápida</span>
+        <span style="font-size:0.65rem; color:#475569; text-align:right; margin-top:-0.3rem;">= 0.18% de un contrato de $10M</span>
+
+        <span style="font-size:0.75rem; color:#94a3b8; margin-top:0.4rem;">Licitación Pública Nacional</span>
+        <span style="font-size:0.85rem; font-weight:700; color:white; text-align:right; margin-top:0.4rem;">$45,000</span>
+        <span style="font-size:0.65rem; color:#475569; margin-top:-0.3rem;">150+ páginas de bases, múltiples anexos, juntas de aclaraciones</span>
+        <span style="font-size:0.65rem; color:#475569; text-align:right; margin-top:-0.3rem;">= 0.45% de un contrato de $10M</span>
+
+        <span style="font-size:0.75rem; color:#94a3b8; margin-top:0.4rem;">Licitación Pública Internacional</span>
+        <span style="font-size:0.85rem; font-weight:700; color:white; text-align:right; margin-top:0.4rem;">$85,000</span>
+        <span style="font-size:0.65rem; color:#475569; margin-top:-0.3rem;">T-MEC, estándares internacionales, documentos apostillados</span>
+        <span style="font-size:0.65rem; color:#475569; text-align:right; margin-top:-0.3rem;">= 0.85% de un contrato de $10M</span>
+
+        <span style="font-size:0.75rem; color:#f59e0b; margin-top:0.4rem; font-weight:600;">Opinión de Experto IA ✦</span>
+        <span style="font-size:0.85rem; font-weight:700; color:#f59e0b; text-align:right; margin-top:0.4rem;">$15,000</span>
+        <span style="font-size:0.65rem; color:#475569; margin-top:-0.3rem;">Auditoría de 200+ puntos sobre tu expediente ya elaborado. Solo quieres saber si está blindado.</span>
+        <span style="font-size:0.65rem; color:#475569; text-align:right; margin-top:-0.3rem;">Máximo margen · cero redacción</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. OPINIÓN DE EXPERTO IA -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">5</div>
+    <span class="section-name">Opinión de Experto IA — Sección dedicada</span>
+    <span class="section-status"><span class="new">NUEVO</span></span>
+  </div>
+  <div class="section-body">
+    <h3>¿Ya tienes el expediente listo? Auditalo antes de entregarlo.</h3>
+    <p class="tagline">El producto de mayor margen. Sin redactar nada — solo la IA revisando lo que tu equipo ya hizo.</p>
+    <div class="items">
+      <div class="item"><div class="dot green"></div><span>Escenario: "Es viernes 6PM. El lunes entregan el sobre. ¿Están seguros de que Lupita no olvidó la vigencia de la fianza?"</span></div>
+      <div class="item"><div class="dot green"></div><span>Entregable: reporte semáforo en 5 minutos. Verde = blindado. Rojo = "ALERTA: Anexo 4 no coincide con el poder notarial del representante legal."</span></div>
+      <div class="item"><div class="dot green"></div><span>CTA propio: "Auditar mi expediente — $15,000"</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. PARA QUIÉN ES -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">6</div>
+    <span class="section-name">Para quién es LICIT-IA</span>
+    <span class="section-status"><span class="new">NUEVO</span></span>
+  </div>
+  <div class="section-body">
+    <p class="tagline">4 industrias objetivo. El cliente debe verse reflejado.</p>
+    <div class="two-col">
+      <div class="mini-card"><h4>🏗 Construcción e Infraestructura</h4><p>CMIC, obra pública federal y estatal, contratos de mantenimiento.</p></div>
+      <div class="mini-card"><h4>💊 Farmacéutica y Salud</h4><p>IMSS, ISSSTE, INSABI. Licitaciones de medicamento y dispositivos médicos.</p></div>
+      <div class="mini-card"><h4>🛡 Seguridad Privada</h4><p>Servicios de vigilancia para dependencias federales y paraestatales.</p></div>
+      <div class="mini-card"><h4>💻 Tecnología Gubernamental</h4><p>Servicios de TI, licenciamiento, infraestructura para sector público.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. DEMO CTA -->
+<div class="section-block">
+  <div class="section-label">
+    <div class="section-num">7</div>
+    <span class="section-name">CTA Final — Demo</span>
+    <span class="section-status"><span class="changed">MODIFICADO</span></span>
+  </div>
+  <div class="section-body">
+    <p class="tagline">Mismo bloque visual actual, CTAs actualizados.</p>
+    <div class="cta-preview">
+      <div>
+        <div style="font-size:0.7rem; color:#64748b; margin-bottom:0.4rem;">Demo en vivo · Licitación IMSS $124.5M · Sin registro</div>
+        <button class="btn-primary">🔒 Agendar demo privada →</button>
+      </div>
+      <button class="btn-secondary">Ver demo interactiva sin registro</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP ADJUSTMENTS -->
+<div style="padding: 0.5rem 0 0.5rem; margin: 2rem 2rem 0;">
+  <p style="font-size:0.7rem; color:#f59e0b; text-transform:uppercase; letter-spacing:0.1em; font-weight:700;">⚙ Ajustes necesarios en la app</p>
+</div>
+
+<div class="app-section">
+  <h2>🔧 Qué hay que cambiar en la app para alinearse con el modelo</h2>
+
+  <div class="app-item">
+    <div class="app-icon">🔐</div>
+    <div>
+      <h4>Vault → agregar alertas de vigencia proactivas <span class="priority p-alta">PRIORIDAD ALTA</span></h4>
+      <p>La Bóveda existe en la app pero es un repositorio pasivo. Necesita un motor de alertas: calcular fechas de vencimiento (SAT 30 días, REPSE, poderes), generar notificaciones en dashboard y por email. Este es el diferenciador #4 que prometemos en la landing.</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">💳</div>
+    <div>
+      <h4>Paywall en "Generar Expediente" — sistema de créditos <span class="priority p-alta">PRIORIDAD ALTA</span></h4>
+      <p>Hoy el botón "Generar Expediente de Propuesta" no tiene precio ni bloqueo. Hay que añadir: (1) selección del tipo de licitación que determina el precio, (2) verificación de créditos disponibles, (3) integración de pago (Stripe/Conekta) o flujo de solicitud manual si no hay créditos. Sin esto el modelo de negocio no existe en producción.</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">✅</div>
+    <div>
+      <h4>Nueva sección: Opinión de Experto IA <span class="priority p-alta">PRIORIDAD ALTA</span></h4>
+      <p>No existe en la app. Hay que crear un flujo donde el usuario sube su expediente ya elaborado (ZIP o PDFs), la IA lo contrasta contra las bases y genera el reporte semáforo de 200+ puntos. Es un producto separado del generador de expedientes.</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">📋</div>
+    <div>
+      <h4>Formulario de "Agendar demo privada" <span class="priority p-media">PRIORIDAD MEDIA</span></h4>
+      <p>Necesitamos una página /solicitar-acceso con formulario corto: nombre, empresa, industria, volumen de licitaciones/año, cargo. Eso alimenta el pipeline de ventas con leads calificados. Por ahora puede ser un formulario simple que mande un email.</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">🏛</div>
+    <div>
+      <h4>Dashboard → mostrar tipo de licitación en cada card <span class="priority p-media">PRIORIDAD MEDIA</span></h4>
+      <p>Las LicitacionCards del dashboard deben mostrar el tipo (ICMTP / LPN / LPI) de forma prominente, porque ese dato determina el precio del expediente. El usuario debe saber cuánto le va a costar generar el expediente antes de dar clic en "Me interesa".</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">👤</div>
+    <div>
+      <h4>Onboarding → capturar perfil de empresa completo <span class="priority p-media">PRIORIDAD MEDIA</span></h4>
+      <p>El ADN Corporativo que prometemos en la landing requiere datos reales: industria, capacidad técnica, contratos previos, certificaciones, REPSE, RFC. El onboarding actual debe ser más completo para que la IA pueda hacer el cruce real contra las bases.</p>
+    </div>
+  </div>
+
+  <div class="app-item">
+    <div class="app-icon">📅</div>
+    <div>
+      <h4>Footer y textos — actualizar año a 2026 <span class="priority p-baja">PRIORIDAD BAJA</span></h4>
+      <p>El footer dice "© 2024". Pequeño detalle que daña credibilidad.</p>
+    </div>
+  </div>
+
+</div>
+
+<div style="height:2rem;"></div>
+</body>
+</html>
