@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+from fastapi import APIRouter, Depends, Query, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, or_
 from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.company import User, Company
-from app.models.licitacion import Licitacion, IngestaJob
+from app.models.licitacion import Licitacion, IngestaJob, LicitacionDoc
 from app.schemas.licitacion import LicitacionResponse, LicitacionDetalle
+from app.services.ocr import extract_text_from_bytes
 import uuid
 
 router = APIRouter()
@@ -157,3 +158,46 @@ async def get_licitacion(
     if not lic:
         raise HTTPException(404, "Licitacion not found")
     return LicitacionDetalle.model_validate(lic)
+
+
+@router.post("/{licitacion_id}/docs/upload")
+async def upload_pdf(
+    licitacion_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Solo se aceptan archivos PDF")
+
+    result = await db.execute(
+        select(Licitacion).where(Licitacion.id == licitacion_id)
+    )
+    lic = result.scalar_one_or_none()
+    if not lic:
+        raise HTTPException(404, "Licitación no encontrada")
+
+    pdf_bytes = await file.read()
+    texto_ocr = extract_text_from_bytes(pdf_bytes)
+
+    existing = await db.execute(
+        select(LicitacionDoc).where(
+            LicitacionDoc.licitacion_id == licitacion_id,
+            LicitacionDoc.tipo == "convocatoria",
+        )
+    )
+    doc = existing.scalar_one_or_none()
+    if doc:
+        doc.texto_ocr = texto_ocr[:180_000]
+        doc.url = f"upload:{file.filename}"
+    else:
+        doc = LicitacionDoc(
+            licitacion_id=licitacion_id,
+            tipo="convocatoria",
+            url=f"upload:{file.filename}",
+            texto_ocr=texto_ocr[:180_000],
+        )
+        db.add(doc)
+
+    await db.commit()
+    return {"mensaje": "PDF subido y procesado", "chars_extraidos": len(texto_ocr)}
