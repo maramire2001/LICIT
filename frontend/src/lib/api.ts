@@ -57,6 +57,11 @@ export const api = {
         `/api/expediente/${expediente_id}/ai-refine?instruccion=${encodeURIComponent(instruccion)}`,
         { method: "POST" }
       ),
+    updateAnexo: (expediente_id: string, items: import("@/types").AnexoRespuesta[]) =>
+      apiFetch<any>(`/api/expediente/${expediente_id}/anexo-respuestas`, {
+        method: "PATCH",
+        body: JSON.stringify({ items }),
+      }),
     descargarZip: async (analisis_id: string) => {
       const token = await getToken()
       const res = await fetch(

@@ -46,12 +46,27 @@ export interface Analisis {
   roi_datos: RoiDatos | null
   pago_status?: string
   created_at: string
+  anexo_tecnico_requisitos: { items: AnexoRequisito[] } | null
 }
 
 export interface Competidor {
   empresa: string
   wins: number
   montos: number[]
+}
+
+export interface AnexoRequisito {
+  numero: string
+  texto: string
+  categoria: "legal" | "tecnico" | "financiero"
+  riesgo: "alto" | "medio" | "bajo"
+  evidencia_requerida: string
+}
+
+export interface AnexoRespuesta {
+  numero: string
+  cumple: boolean | null
+  nota: string
 }
 
 export interface Expediente {
@@ -63,4 +78,5 @@ export interface Expediente {
   checklist: { items: string[] }
   faltantes: { items: string[] }
   version: number
+  anexo_respuestas: { items: AnexoRespuesta[] } | null
 }

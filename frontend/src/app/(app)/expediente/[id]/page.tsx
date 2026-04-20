@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
-import type { Expediente } from "@/types"
+import type { Expediente, Analisis } from "@/types"
 import { ExpedienteEditor } from "@/components/expediente/ExpedienteEditor"
 import Link from "next/link"
 
@@ -90,6 +90,7 @@ export default function ExpedientePage({
 }) {
   const router = useRouter()
   const [expediente, setExpediente] = useState<Expediente | null>(null)
+  const [analisis, setAnalisis] = useState<Analisis | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [descargando, setDescargando] = useState(false)
@@ -108,8 +109,13 @@ export default function ExpedientePage({
       .then((data) => {
         if (data) {
           setExpediente(data)
-          setLoading(false)
+          return api.analisis.get(data.analisis_id)
         }
+        return undefined
+      })
+      .then((analisisData) => {
+        if (analisisData) setAnalisis(analisisData)
+        setLoading(false)
       })
       .catch(() => {
         setError("Expediente no encontrado o análisis aún en proceso")
@@ -204,7 +210,7 @@ export default function ExpedientePage({
         )}
 
         <VaultGap analisisId={expediente.analisis_id} />
-        <ExpedienteEditor expediente={expediente} />
+        <ExpedienteEditor expediente={expediente} analisis={analisis} />
       </div>
     </div>
   )
