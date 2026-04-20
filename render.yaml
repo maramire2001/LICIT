@@ -41,10 +41,9 @@ services:
   - type: worker
     name: licit-ia-worker
     runtime: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: ./backend/Dockerfile.worker
     dockerContext: ./backend
     plan: free
-    startCommand: celery -A app.workers.celery_app worker --loglevel=info -Q ingesta,pipeline
     envVars:
       - key: DATABASE_URL
         fromDatabase:
