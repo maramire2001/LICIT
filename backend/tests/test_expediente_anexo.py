@@ -54,3 +54,20 @@ async def test_expediente_response_includes_anexo_respuestas():
     assert resp.status_code in (200, 401, 404)
     if resp.status_code == 200:
         assert "anexo_respuestas" in resp.json()
+
+
+@pytest.mark.asyncio
+async def test_update_anexo_respuestas_schema():
+    """Verify PATCH /anexo-respuestas accepts valid payload and schema is correct."""
+    from app.schemas.expediente import UpdateAnexoRespuestas, AnexoRespuestaItem
+    payload = UpdateAnexoRespuestas(items=[
+        AnexoRespuestaItem(numero="3.1", cumple=True, nota="Tenemos 2 unidades"),
+        AnexoRespuestaItem(numero="3.2", cumple=False, nota=""),
+        AnexoRespuestaItem(numero="3.3", cumple=None, nota=""),
+    ])
+    # Verify serialization is correct
+    data = {"items": [r.model_dump() for r in payload.items]}
+    assert data["items"][0]["cumple"] is True
+    assert data["items"][1]["cumple"] is False
+    assert data["items"][2]["cumple"] is None
+    assert data["items"][0]["nota"] == "Tenemos 2 unidades"

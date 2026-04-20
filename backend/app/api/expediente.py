@@ -6,7 +6,7 @@ from app.core.database import get_db
 from app.core.auth import get_current_user
 from app.models.company import User, Company
 from app.models.expediente import Expediente
-from app.schemas.expediente import ExpedienteResponse, UpdatePropuestaTecnica
+from app.schemas.expediente import ExpedienteResponse, UpdatePropuestaTecnica, UpdateAnexoRespuestas
 from app.core.llm_client import chat
 from app.models.analisis import Analisis
 from app.models.vault import VaultDocumento
@@ -140,6 +140,45 @@ def _generar_pendientes(docs_requeridos: list[dict], riesgos_items: list[str]) -
     return "\n".join(lines)
 
 
+def _generar_anexo(anexo_respuestas: dict | None, requisitos_extraidos: list[dict]) -> str:
+    respuestas_map: dict[str, dict] = {}
+    for r in (anexo_respuestas or {}).get("items", []):
+        respuestas_map[r.get("numero", "")] = r
+
+    lines = ["REVISIÓN ANEXO TÉCNICO", "=" * 40, ""]
+    cumple_count = 0
+    no_cumple_count = 0
+    pendiente_count = 0
+
+    for req in requisitos_extraidos:
+        num = req.get("numero", "?")
+        texto = req.get("texto", "")[:120]
+        riesgo = req.get("riesgo", "bajo").upper()
+        resp = respuestas_map.get(num, {})
+        cumple = resp.get("cumple")
+        nota = resp.get("nota", "")
+
+        if cumple is True:
+            estado = "✓ CUMPLE"
+            cumple_count += 1
+        elif cumple is False:
+            estado = "✗ NO CUMPLE"
+            no_cumple_count += 1
+        else:
+            estado = "? PENDIENTE"
+            pendiente_count += 1
+
+        lines.append(f"[{num}] [{riesgo}] {estado}")
+        lines.append(f"  {texto}...")
+        if nota:
+            lines.append(f"  Nota: {nota}")
+        lines.append("")
+
+    lines.insert(2, f"Cumple: {cumple_count}  |  No cumple: {no_cumple_count}  |  Pendiente: {pendiente_count}")
+    lines.insert(3, "")
+    return "\n".join(lines)
+
+
 router = APIRouter()
 
 @router.get("/{analisis_id}", response_model=ExpedienteResponse)
@@ -217,6 +256,29 @@ async def ai_refine(
     return {"propuesta_tecnica_draft": refined}
 
 
+@router.patch("/{expediente_id}/anexo-respuestas", response_model=ExpedienteResponse)
+async def update_anexo_respuestas(
+    expediente_id: uuid.UUID,
+    payload: UpdateAnexoRespuestas,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Expediente).where(
+            Expediente.id == expediente_id,
+            Expediente.company_id == current_user.company_id,
+        )
+    )
+    exp = result.scalar_one_or_none()
+    if not exp:
+        raise HTTPException(404, "Expediente no encontrado")
+    exp.anexo_respuestas = {"items": [r.model_dump() for r in payload.items]}
+    exp.version += 1
+    await db.commit()
+    await db.refresh(exp)
+    return exp
+
+
 @router.get("/{analisis_id}/zip")
 async def descargar_zip(
     analisis_id: uuid.UUID,
@@ -285,13 +347,17 @@ async def descargar_zip(
     )
     pendientes = _generar_pendientes(docs_requeridos, flag_items)
 
+    req_items = (analisis.anexo_tecnico_requisitos or {}).get("items", [])
+    anexo_txt = _generar_anexo(exp.anexo_respuestas, req_items)
+
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
         zf.writestr("portada.txt", portada)
         zf.writestr("01_checklist_cumplimiento.txt", checklist)
         zf.writestr("02_propuesta_tecnica.txt", tecnica)
-        zf.writestr("03_propuesta_economica.txt", economica)
-        zf.writestr("04_pendientes.txt", pendientes)
+        zf.writestr("03_anexo_tecnico_revision.txt", anexo_txt)
+        zf.writestr("04_propuesta_economica.txt", economica)
+        zf.writestr("05_pendientes.txt", pendientes)
     buf.seek(0)
 
     filename = f"expediente_{analisis_id_short}.zip"
