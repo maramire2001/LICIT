@@ -12,7 +12,7 @@ celery_app = Celery(
 celery_app.conf.beat_schedule = {
     "ingesta-incremental": {
         "task": "app.workers.ingesta.incremental_ingesta",
-        "schedule": crontab(minute=0, hour="*/6"),
+        "schedule": crontab(minute=0, hour="6,12,18"),
     },
 }
 

@@ -44,6 +44,8 @@ async def _backfill():
                     job.progreso = min(int((page / max(page_count, 1)) * 100), 99)
                     await db.commit()
                     page += 1
+                    if page > 2:
+                        break
                 job.status = "completado"
                 job.progreso = 100
                 await db.commit()
@@ -62,13 +64,17 @@ async def _incremental():
         async with Session() as db:
             data = await fetch_licitaciones_page(page=1, page_size=100)
             releases = data.get("results", [])
-            await _upsert_releases(db, releases)
+            nuevas = await _upsert_releases(db, releases)
             await db.commit()
+            if nuevas > 0:
+                from app.services.notificaciones import notificar_nuevas_licitaciones
+                await notificar_nuevas_licitaciones(nuevas)
     finally:
         await engine.dispose()
 
 
-async def _upsert_releases(db, releases: list[dict]):
+async def _upsert_releases(db, releases: list[dict]) -> int:
+    nuevas = 0
     for release in releases:
         parsed = parse_ocds_release(release)
         ocid = parsed["numero_procedimiento"]
@@ -90,6 +96,7 @@ async def _upsert_releases(db, releases: list[dict]):
             )
             db.add(lic)
             await db.flush()
+            nuevas += 1
             if parsed.get("empresa_ganadora"):
                 adj = Adjudicacion(
                     licitacion_id=lic.id,
@@ -99,3 +106,4 @@ async def _upsert_releases(db, releases: list[dict]):
                     nivel_confianza="medio",
                 )
                 db.add(adj)
+    return nuevas
