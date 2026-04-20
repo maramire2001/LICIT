@@ -5,6 +5,7 @@ from app.core.llm_client import chat
 from app.models.analisis import Analisis
 from app.models.licitacion import Licitacion, Adjudicacion
 from app.models.expediente import Expediente
+from app.services.pdf_downloader import get_or_fetch_ocr
 from sqlalchemy import select, func
 import redis.asyncio as aioredis
 from app.core.config import settings
@@ -56,16 +57,27 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
         )
         licitacion = lic_result.scalar_one()
 
-        await _publish_progress(analisis_id, "Leyendo licitación", 10)
+        await _publish_progress(analisis_id, "Descargando bases de licitación (PDF)", 10)
 
-        licitacion_text = (
-            f"Título: {licitacion.titulo}\n"
-            f"Dependencia: {licitacion.dependencia}\n"
-            f"Monto estimado: {licitacion.monto_estimado}\n"
-            f"Datos adicionales: {json.dumps(licitacion.raw_json, ensure_ascii=False)[:4000]}"
-        )
+        texto_ocr = await get_or_fetch_ocr(db, licitacion)
 
-        await _publish_progress(analisis_id, "Construyendo anatomía con IA", 30)
+        if texto_ocr:
+            licitacion_text = (
+                f"Título: {licitacion.titulo}\n"
+                f"Dependencia: {licitacion.dependencia}\n"
+                f"Monto estimado: {licitacion.monto_estimado}\n\n"
+                f"--- TEXTO COMPLETO DE LAS BASES (OCR) ---\n{texto_ocr}"
+            )
+        else:
+            licitacion_text = (
+                f"Título: {licitacion.titulo}\n"
+                f"Dependencia: {licitacion.dependencia}\n"
+                f"Monto estimado: {licitacion.monto_estimado}\n"
+                f"Datos adicionales: {json.dumps(licitacion.raw_json, ensure_ascii=False)[:4000]}\n"
+                f"NOTA: No se pudo descargar el PDF de las bases. Análisis basado solo en metadatos."
+            )
+
+        await _publish_progress(analisis_id, "Extrayendo requisitos técnicos con IA", 25)
 
         analysis_raw = await chat(
             messages=[
@@ -96,13 +108,27 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
                         '    {"requisito": "descripcion del requisito financiero o documental", "nivel_riesgo": "alto"|"medio"|"bajo"}\n'
                         "  ],\n"
                         '  "requisitos_criticos": ["lista de los 5 requisitos mas importantes"],\n'
-                        '  "riesgos_descalificacion": ["lista de hasta 4 causas comunes de descalificacion en este tipo de licitacion"]\n'
+                        '  "riesgos_descalificacion": ["lista de hasta 4 causas comunes de descalificacion en este tipo de licitacion"],\n'
+                        '  "requisitos_anexo": [\n'
+                        '    {\n'
+                        '      "numero": "identificador del punto en las bases, ej: 3.1 o IV.2.a",\n'
+                        '      "texto": "texto exacto o parafraseo fiel del requisito tal como aparece en las bases",\n'
+                        '      "categoria": "legal" o "tecnico" o "financiero",\n'
+                        '      "riesgo": "alto" o "medio" o "bajo",\n'
+                        '      "evidencia_requerida": "documento o acreditacion especifica que exige este punto"\n'
+                        "    }\n"
+                        "  ]\n"
                         "}\n\n"
-                        "Reglas:\n"
+                        "Reglas para requisitos_anexo:\n"
+                        "- Extrae TODOS los requisitos numerados del Anexo Técnico y bases de licitación\n"
+                        "- Usa el número/identificador exacto que aparece en el documento\n"
+                        "- Si no hay PDF disponible, genera requisitos típicos para este tipo de licitación\n"
+                        "- Incluye entre 5 y 30 items\n\n"
+                        "Reglas para matrices:\n"
                         "- matriz_humana: perfiles de personal, certificaciones, cantidades de elementos\n"
                         "- matriz_materiales: equipos, insumos, vehículos, tecnología requerida\n"
                         "- matriz_financiera: capital contable, liquidez, estados financieros, fianzas, seguros\n"
-                        "- Cada matriz debe tener entre 2 y 5 items\n"
+                        "- Cada matriz: entre 2 y 5 items\n"
                         "- nivel_riesgo 'alto' = causa frecuente de descalificación\n\n"
                         f"Licitación:\n{licitacion_text}"
                     ),
@@ -209,6 +235,7 @@ async def ejecutar_analisis(analisis_id: str, company_id: str, licitacion_id: st
         analisis.matriz_materiales = {"items": analysis.get("matriz_materiales", [])}
         analisis.matriz_financiera = {"items": analysis.get("matriz_financiera", [])}
         analisis.roi_datos = ROI_FIJO
+        analisis.anexo_tecnico_requisitos = {"items": analysis.get("requisitos_anexo", [])}
 
         await db.commit()
         await _publish_progress(analisis_id, "Análisis completo", 100)
