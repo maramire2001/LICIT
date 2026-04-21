@@ -38,7 +38,7 @@ services:
       - key: BANK_TITULAR
         value: Mario Antonio Ramirez Barajas
 
-  - type: worker
+  - type: web
     name: licit-ia-worker
     runtime: docker
     dockerfilePath: ./backend/Dockerfile.worker
