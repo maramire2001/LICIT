@@ -28,7 +28,7 @@ services:
       - key: SUPABASE_JWT_SECRET
         sync: false
       - key: ALLOWED_ORIGINS
-        sync: false
+        value: https://licit-ia-frontend.onrender.com
       - key: ADMIN_EMAIL
         value: marioantonioramirezbarajas@gmail.com
       - key: BANK_CLABE
@@ -73,6 +73,6 @@ services:
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         value: sb_publishable_DL0tJh4VE0btL35sattoxg_BmLhY-ZQ
       - key: NEXT_PUBLIC_API_URL
-        sync: false
+        value: https://licit-ia-backend.onrender.com
       - key: PORT
         value: "3000"
