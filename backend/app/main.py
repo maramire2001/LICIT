@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
@@ -7,7 +8,26 @@ from app.api import analisis, ws
 from app.api import vault, expediente
 from app.api import pagos
 
-app = FastAPI(title="LICIT-IA API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Si la DB está vacía, lanza el backfill automáticamente al arrancar
+    try:
+        from sqlalchemy import select, func
+        from app.core.database import AsyncSessionLocal
+        from app.models.licitacion import Licitacion
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(select(func.count()).select_from(Licitacion))
+            count = result.scalar() or 0
+        if count == 0:
+            from app.workers.ingesta import backfill_ingesta
+            backfill_ingesta.delay()
+    except Exception:
+        pass  # No bloquear el arranque si Celery/Redis no están listos aún
+    yield
+
+
+app = FastAPI(title="LICIT-IA API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
