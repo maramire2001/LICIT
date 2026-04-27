@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import Link from "next/link"
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
 type PagoPendiente = {
   analisis_id: string
   company_id: string
@@ -24,6 +26,8 @@ export default function AdminPagosPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [bloqueando, setBloqueando] = useState<string | null>(null)
+  const [backfillStatus, setBackfillStatus] = useState("")
+  const [backfillRunning, setBackfillRunning] = useState(false)
 
   async function cargar() {
     setLoading(true)
@@ -39,6 +43,30 @@ export default function AdminPagosPage() {
   }
 
   useEffect(() => { cargar() }, [])
+
+  async function triggerBackfill() {
+    setBackfillRunning(true)
+    setBackfillStatus("")
+    try {
+      const { createBrowserClient } = await import("@supabase/ssr")
+      const sb = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+      const { data } = await sb.auth.getSession()
+      const token = data.session?.access_token
+      const res = await fetch(`${API_URL}/api/licitaciones/backfill`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      setBackfillStatus(json.mensaje || json.status || "En cola")
+    } catch {
+      setBackfillStatus("Error al iniciar backfill")
+    } finally {
+      setBackfillRunning(false)
+    }
+  }
 
   async function bloquear(analisis_id: string) {
     setBloqueando(analisis_id)
@@ -73,6 +101,27 @@ export default function AdminPagosPage() {
           <Link href="/dashboard" className="text-gray-500 text-sm hover:text-gray-300 transition-colors">
             ← Dashboard
           </Link>
+        </div>
+
+        {/* Crawler */}
+        <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-white text-sm font-semibold">CompraNet Crawler</p>
+            <p className="text-gray-500 text-xs mt-0.5">
+              {backfillStatus || "Importa licitaciones desde api.datos.gob.mx"}
+            </p>
+          </div>
+          <button
+            onClick={triggerBackfill}
+            disabled={backfillRunning}
+            className={`shrink-0 px-4 py-2 rounded-md text-xs font-semibold transition-colors ${
+              backfillRunning
+                ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                : "bg-blue-700 hover:bg-blue-600 text-white"
+            }`}
+          >
+            {backfillRunning ? "Iniciando..." : "Lanzar backfill"}
+          </button>
         </div>
 
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}

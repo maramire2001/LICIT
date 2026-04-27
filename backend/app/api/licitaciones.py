@@ -7,9 +7,27 @@ from app.models.company import User, Company
 from app.models.licitacion import Licitacion, IngestaJob, LicitacionDoc
 from app.schemas.licitacion import LicitacionResponse, LicitacionDetalle
 from app.services.ocr import extract_text_from_bytes
+import os
 import uuid
 
 router = APIRouter()
+
+
+def _is_admin(user: User) -> bool:
+    admin_email = os.getenv("ADMIN_EMAIL", "")
+    return bool(admin_email) and user.email == admin_email
+
+
+@router.post("/backfill")
+async def trigger_backfill(
+    current_user: User = Depends(get_current_user),
+):
+    """Admin: lanza el backfill del crawler de CompraNet."""
+    if not _is_admin(current_user):
+        raise HTTPException(403, "Solo el administrador puede iniciar el backfill")
+    from app.workers.ingesta import backfill_ingesta
+    backfill_ingesta.delay()
+    return {"status": "iniciado", "mensaje": "Backfill en cola — revisa /ingesta-status para el progreso"}
 
 # ---------------------------------------------------------------------------
 # Scoring helper
