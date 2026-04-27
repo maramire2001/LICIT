@@ -191,7 +191,7 @@ export function PanelDecision({ analisis }: { analisis: Analisis }) {
 
       {/* CTA */}
       <Link
-        href={`/pago/${analisis.id}`}
+        href={`/expediente/${analisis.id}`}
         className="block w-full text-center bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors"
       >
         Ver expediente generado →

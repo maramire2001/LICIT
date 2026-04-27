@@ -27,6 +27,7 @@ async def crear_analisis(
         requisitos_criticos={},
         riesgos={},
         competidores={},
+        pago_status="confirmado",
     )
     db.add(analisis)
     await db.commit()
