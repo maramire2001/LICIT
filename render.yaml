@@ -95,7 +95,7 @@ services:
       - key: NEXT_PUBLIC_SUPABASE_URL
         value: https://babeehjmieyhxmtxadhd.supabase.co
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
-        value: sb_publishable_DL0tJh4VE0btL35sattoxg_BmLhY-ZQ
+        value: sb_publishable_XP0u8dRfYPrRXucbqQ1vIA_dV-Dup1N
       - key: NEXT_PUBLIC_API_URL
         value: https://licit-ia-backend.onrender.com
       - key: PORT
