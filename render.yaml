@@ -1,15 +1,9 @@
-databases:
-  - name: licit-ia-db
-    databaseName: licitia
-    user: licitia
-    plan: free
-
-  - name: licit-ia-redis
-    type: redis
+services:
+  - type: redis
+    name: licit-ia-redis
     plan: free
     ipAllowList: []
 
-services:
   - type: web
     name: licit-ia-backend
     runtime: docker
@@ -19,12 +13,11 @@ services:
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: licit-ia-db
-          property: connectionString
+        value: postgresql://postgres:Euncet2024%40@db.babeehjmieyhxmtxadhd.supabase.co:5432/postgres
       - key: REDIS_URL
-        fromDatabase:
+        fromService:
           name: licit-ia-redis
+          type: redis
           property: connectionString
       - key: ANTHROPIC_API_KEY
         sync: false
@@ -53,12 +46,11 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: licit-ia-db
-          property: connectionString
+        value: postgresql://postgres:Euncet2024%40@db.babeehjmieyhxmtxadhd.supabase.co:5432/postgres
       - key: REDIS_URL
-        fromDatabase:
+        fromService:
           name: licit-ia-redis
+          type: redis
           property: connectionString
       - key: ANTHROPIC_API_KEY
         sync: false
@@ -77,12 +69,11 @@ services:
     plan: free
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: licit-ia-db
-          property: connectionString
+        value: postgresql://postgres:Euncet2024%40@db.babeehjmieyhxmtxadhd.supabase.co:5432/postgres
       - key: REDIS_URL
-        fromDatabase:
+        fromService:
           name: licit-ia-redis
+          type: redis
           property: connectionString
       - key: ANTHROPIC_API_KEY
         sync: false
@@ -102,7 +93,7 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_SUPABASE_URL
-        value: https://wpsfleoqtwphyierabzl.supabase.co
+        value: https://babeehjmieyhxmtxadhd.supabase.co
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         value: sb_publishable_DL0tJh4VE0btL35sattoxg_BmLhY-ZQ
       - key: NEXT_PUBLIC_API_URL
